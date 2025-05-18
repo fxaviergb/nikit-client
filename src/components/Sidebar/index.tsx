@@ -45,8 +45,8 @@ const menuGroups = [
           </defs>
         </svg>
         ),
-        label: "Evaluación",
-        route: "/evaluation",
+        label: "Aprendizaje",
+        route: "/learn",
       },
       {
         icon: (

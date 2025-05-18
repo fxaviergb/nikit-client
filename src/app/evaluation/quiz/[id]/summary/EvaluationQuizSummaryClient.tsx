@@ -38,21 +38,18 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
   }, [quizId]);
 
   if (loading) return <p>Cargando cuestionario...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
   if (!quizSummary) return <p>No se encontró información para este cuestionario.</p>;
 
   return (
     <div className="container mx-auto p-6">
       {/* Cabecera del Quiz con botones alineados a la derecha */}
       <div className="bg-white shadow-lg rounded-lg p-6 mb-6 flex justify-between items-center">
-        {/* Información del Quiz */}
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">{quizSummary.name}</h1>
           <p className="text-gray-600">{quizSummary.description}</p>
           <p className="text-gray-600 font-semibold">Preguntas: {quizSummary.questions}</p>
         </div>
-
-        {/* Botones de Acción */}
         <div className="flex space-x-4">
           <button
             onClick={() => router.push(`/evaluation/quiz/${quizId}/execution`)}
@@ -61,7 +58,7 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
             Iniciar
           </button>
           <button
-            onClick={() => router.push(`/evaluation`)}
+            onClick={() => router.push(`/learn`)}
             className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
           >
             Volver
@@ -69,13 +66,20 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
         </div>
       </div>
 
-      {/* Tabla de Intentos */}
+      {/* Tabla de Intentos o mensaje alternativo */}
       <h2 className="text-xl font-semibold mb-4">Intentos Anteriores</h2>
-      <QuizAttemptsTable 
-        quizId={quizId} 
-        attempts={quizSummary.attempts} 
-        generateHref={(id) => `/evaluation/quiz/${quizId}/attempt/${id}`} // 📌 URL dinámica
-      />
+
+      {quizSummary.attempts.length === 0 ? (
+        <div className="text-center text-gray-600 py-10 bg-gray-50 rounded-md shadow-sm">
+          <p className="text-lg">Aún no se han registrado intentos.</p>
+        </div>
+      ) : (
+        <QuizAttemptsTable
+          quizId={quizId}
+          attempts={quizSummary.attempts}
+          generateHref={(id) => `/evaluation/quiz/${quizId}/attempt/${id}`}
+        />
+      )}
     </div>
   );
 };

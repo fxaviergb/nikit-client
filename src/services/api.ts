@@ -23,6 +23,40 @@ const apiClient = axios.create({
   },
 });
 
+// 🔹 **Función para obtener la lista de conocimientos**
+export const fetchKnowledges = async (): Promise<GenericListItem[]> => {
+  if (USE_MOCK) {
+    console.log("Usando datos de MOCK para la lista de knwoledge.");
+    const mockData = MockData.getKnowledges();
+    return GenericListMapper.mapToGenericListItem(mockData);
+  }
+
+  try {
+    const response = await apiClient.get<{ id: string; name: string; description: string }[]>("/api/v1/knowledge");
+    return GenericListMapper.mapToGenericListItem(response.data);
+  } catch (error) {
+    console.error("Error fetching knowledges:", error);
+    return [];
+  }
+};
+
+// 🔹 **Función para obtener la lista de tópicos seg[un el ID de conocimiento**
+export const fetchTopicsByKnowledge = async (knowledgeId: string): Promise<GenericListItem[]> => {
+  if (USE_MOCK) {
+    console.log("Usando datos de MOCK para la lista de tópicos.");
+    const mockData = MockData.getTopics();
+    return GenericListMapper.mapToGenericListItem(mockData);
+  }
+
+  try {
+    const response = await apiClient.get<{ id: string; name: string; description: string }[]>(`/api/v1/knowledge/${knowledgeId}/topics`);
+    return GenericListMapper.mapToGenericListItem(response.data);
+  } catch (error) {
+    console.error("Error fetching topics:", error);
+    return [];
+  }
+};
+
 // 🔹 **Función para obtener la lista de tópicos**
 export const fetchTopics = async (): Promise<GenericListItem[]> => {
   if (USE_MOCK) {
@@ -131,6 +165,29 @@ export const createQuizByTopic = async (topicId: string, payload: any) => {
     return response.data;
   } catch (error) {
     console.error(`❌ Error al crear cuestionario para topic ${topicId}:`, error);
+    throw error;
+  }
+};
+
+export const createKnowledge = async (payload: { name: string; description: string }) => {
+  try {
+    const response = await apiClient.post(`/api/v1/knowledge`, payload);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al crear grupo de conocimiento:`, error);
+    throw error;
+  }
+};
+
+export const createTopic = async (
+  knowledgeId: string,
+  payload: { name: string; description: string }
+) => {
+  try {
+    const response = await apiClient.post(`/api/v1/topic/${knowledgeId}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al crear tema para knowledgeId=${knowledgeId}:`, error);
     throw error;
   }
 };

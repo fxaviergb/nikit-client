@@ -1,5 +1,13 @@
 export class MockData {
-    static getTopics(): { id: string; name: string; description: string }[] {
+  static getKnowledges(): { id: string; name: string; description: string }[] {
+      return [
+        { id: "knowledge1", name: "Knowledge 1", description: "Lorem ipsum lorem" },
+        { id: "knowledge2", name: "Knowledge 2", description: "Lorem ipsum lorem" },
+        { id: "knowledge3", name: "Knowledge 3", description: "Lorem ipsum lorem" },
+      ];
+    }
+
+  static getTopics(): { id: string; name: string; description: string }[] {
       return [
         { id: "qwerty1", name: "Topic 1", description: "Lorem ipsum lorem" },
         { id: "qwerty2", name: "Topic 2", description: "Lorem ipsum lorem" },
