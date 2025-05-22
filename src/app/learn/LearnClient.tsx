@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import GenericListCard from "@/components/List/GenericListCard";
 import { GenericListItem } from "@/types/generic-list-item";
-import { fetchKnowledges, createKnowledge } from "@/services/api";
+import { fetchKnowledges, createKnowledge, updateKnowledge } from "@/services/api";
 
 const LearnClient: React.FC = () => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
@@ -13,20 +13,43 @@ const LearnClient: React.FC = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  useEffect(() => {
-    const loadKnowledges = async () => {
-      try {
-        const data = await fetchKnowledges();
-        setListData(data);
-      } catch (err) {
-        setError("Error al cargar los grupos de conocimiento.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
-    loadKnowledges();
+  useEffect(() => {
+    loadList();
   }, []);
+
+  const mapWithActions = (items: GenericListItem[]): GenericListItem[] => {
+    return items.map((item) => ({
+      ...item,
+      actions: (
+        <button
+          className="text-blue-600 ml-4 text-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setEditItemId(item.id);
+            setEditName(item.name);
+          }}
+          title="Modificar"
+        >
+          ✏️
+        </button>
+      ),
+    }));
+  };
+
+  const loadList = async () => {
+    try {
+      const data = await fetchKnowledges();
+      setListData(mapWithActions(data));
+    } catch (err) {
+      setError("Error al cargar los grupos de conocimiento.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -34,10 +57,21 @@ const LearnClient: React.FC = () => {
       setShowModal(false);
       setName("");
       setDescription("");
-      const updatedList = await fetchKnowledges();
-      setListData(updatedList);
+      await loadList();
     } catch (err) {
       alert("Error al guardar el grupo de conocimiento.");
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editItemId) return;
+    try {
+      await updateKnowledge(editItemId, { name: editName });
+      setEditItemId(null);
+      setEditName("");
+      await loadList();
+    } catch (err) {
+      alert("Error al actualizar el grupo de conocimiento.");
     }
   };
 
@@ -65,36 +99,45 @@ const LearnClient: React.FC = () => {
         </button>
       </div>
 
-      {showModal && (
+      {(showModal || editItemId) && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
           <div className="bg-white rounded p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Agrega un grupo de conocimiento</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {editItemId ? "Modificar grupo de conocimiento" : "Agrega un grupo de conocimiento"}
+            </h2>
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Nombre</label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={editItemId ? editName : name}
+                onChange={(e) =>
+                  editItemId ? setEditName(e.target.value) : setName(e.target.value)
+                }
                 className="w-full border rounded px-3 py-2"
               />
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Descripción</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-              />
-            </div>
+            {!editItemId && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                />
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditItemId(null);
+                }}
                 className="px-4 py-2 border rounded hover:bg-gray-100"
               >
                 Cancelar
               </button>
               <button
-                onClick={handleSave}
+                onClick={editItemId ? handleUpdate : handleSave}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Guardar
