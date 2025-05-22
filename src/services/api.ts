@@ -191,3 +191,23 @@ export const createTopic = async (
     throw error;
   }
 };
+
+export const updateKnowledge = async (id: string, payload: { name: string }) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/knowledge/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al actualizar grupo de conocimiento ${id}:`, error);
+    throw error;
+  }
+};
+
+export const updateTopic = async (id: string, payload: { name: string; description: string }) => {
+  try {
+    const response = await apiClient.patch(`/api/v1/topic/${id}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al actualizar tema ${id}:`, error);
+    throw error;
+  }
+};

@@ -15,6 +15,7 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
   const [reviewData, setReviewData] = useState<AttemptReviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!quizId || !attemptId) {
@@ -37,6 +38,13 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
 
     loadReview();
   }, [quizId, attemptId]);
+
+  const toggleFeedback = (questionId: string) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  };
 
   if (loading) return <p className="text-gray-500">Cargando revisión del intento...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -61,49 +69,75 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
 
       {/* Preguntas y opciones */}
       <div className="space-y-6">
-        {reviewData.review.map((question: ReviewQuestion) => (
-          <div key={question.id} className="bg-white shadow-md rounded-lg p-4">
-            <h2 className="text-lg font-semibold text-gray-800">{question.question}</h2>
-            <div className="mt-2 space-y-2">
-              {question.options.map((option: ReviewOption) => {
-                const { isCorrect, isSelected, feedback } = option.review;
+        {reviewData.review.map((question: ReviewQuestion) => {
+          const selectedOption = question.options.find(opt => opt.review.isSelected);
+          const selectedIsCorrect = selectedOption?.review?.isCorrect;
+          const isExpanded = expandedQuestions[question.id] || false;
 
-                let bgClass = "border-gray-300";
-                let icon = "🔹";
+          return (
+            <div key={question.id} className="bg-white shadow-md rounded-lg p-4">
+              <h2 className="text-lg font-semibold text-gray-800">{question.question}</h2>
+              <div className="mt-2 space-y-2">
+                {question.options.map((option: ReviewOption) => {
+                  const { isCorrect, isSelected, feedback } = option.review;
 
-                if (isCorrect && isSelected) {
-                  bgClass = "bg-green-100 border-green-500";
-                  icon = "✅";
-                } else if (isCorrect && !isSelected) {
-                  bgClass = "bg-red-100 border-red-500";
-                  icon = "❌";
-                }
+                  let bgClass = "border-gray-300";
+                  let icon = "🔹";
 
-                return (
-                  <div key={option.id} className="space-y-1">
-                    <div className={`p-2 border rounded-md flex items-center space-x-2 ${bgClass}`}>
-                      <span>{icon}</span>
-                      <span>{option.option}</span>
-                    </div>
+                  if (isSelected && isCorrect) {
+                    bgClass = "bg-green-100 border-green-500";
+                    icon = "✅";
+                  } else if (isSelected && !isCorrect) {
+                    bgClass = "bg-red-100 border-red-500";
+                    icon = "❌";
+                  }
 
-                    {feedback?.trim() && (
-                      <div className="ml-6 p-2 bg-gray-100 border-l-4 border-gray-400 text-gray-700 rounded">
-                        {feedback}
+                  return (
+                    <div key={option.id} className="space-y-1">
+                      <div className={`p-2 border rounded-md flex items-center space-x-2 ${bgClass}`}>
+                        <span>{icon}</span>
+                        <span>{option.option}</span>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
 
-            {question.review?.feedback?.trim() && (
-              <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
-                <p className="font-semibold mb-1">Retroalimentación</p>
-                {question.review.feedback}
+                      {isSelected && feedback?.trim() && (
+                        <div className="ml-6 p-2 bg-gray-100 border-l-4 border-gray-400 text-gray-700 rounded">
+                          {feedback}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Botón minimalista + retroalimentación general (estilo original) */}
+              {selectedIsCorrect && question.review?.feedback?.trim() && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => toggleFeedback(question.id)}
+                    className="text-sm text-blue-600 flex items-center space-x-1 focus:outline-none"
+                  >
+                    <span className="hover:underline">
+                      {isExpanded ? "Ocultar retroalimentación" : "Mostrar retroalimentación"}
+                    </span>
+                    <span
+                      className={`transform transition-transform duration-300 ${
+                        isExpanded ? "rotate-90" : "rotate-0"
+                      }`}
+                    >
+                      ▶
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <div className="mt-2 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
+                      <p className="font-semibold mb-1">Retroalimentación</p>
+                      {question.review.feedback}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Botón "Ok" */}

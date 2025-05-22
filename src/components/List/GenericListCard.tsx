@@ -52,7 +52,7 @@ const GenericListCard: React.FC<GenericListCardProps> = ({ listData, cardTitle, 
                 {getInitials(item.name)}
               </div>
 
-              {/* Información del cuestionario */}
+              {/* Información del cuestionario y acciones */}
               <div className="flex flex-1 items-center justify-between">
                 <div>
                   <h5 className="font-medium text-black dark:text-white">{item.name}</h5>
@@ -60,6 +60,11 @@ const GenericListCard: React.FC<GenericListCardProps> = ({ listData, cardTitle, 
                     <span className="text-sm text-black dark:text-white">{item.text}</span>
                   </p>
                 </div>
+                {item.actions && (
+                  <div className="ml-4">
+                    {item.actions}
+                  </div>
+                )}
               </div>
             </Link>
           );
