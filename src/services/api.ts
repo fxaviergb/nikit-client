@@ -20,6 +20,7 @@ const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
     "Authorization": AUTH_TOKEN,
+    "ngrok-skip-browser-warning": "true"
   },
 });
 
