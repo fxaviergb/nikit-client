@@ -1,0 +1,26 @@
+services:
+  nikit-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+        NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
+        NEXT_PUBLIC_ENABLE_TOKEN_REFRESH: ${NEXT_PUBLIC_ENABLE_TOKEN_REFRESH}
+        NEXT_PUBLIC_AUTH_USERNAME: ${NEXT_PUBLIC_AUTH_USERNAME}
+        NEXT_PUBLIC_AUTH_PASSWORD: ${NEXT_PUBLIC_AUTH_PASSWORD}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+      NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
+      NEXT_PUBLIC_ENABLE_TOKEN_REFRESH: ${NEXT_PUBLIC_ENABLE_TOKEN_REFRESH}
+      NEXT_PUBLIC_AUTH_USERNAME: ${NEXT_PUBLIC_AUTH_USERNAME}
+      NEXT_PUBLIC_AUTH_PASSWORD: ${NEXT_PUBLIC_AUTH_PASSWORD}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - td-network
+
+networks:
+  td-network:
+    external: true
