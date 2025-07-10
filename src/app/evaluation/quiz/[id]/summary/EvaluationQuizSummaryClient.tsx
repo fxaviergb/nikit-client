@@ -10,13 +10,12 @@ interface EvaluationQuizClientSummaryProps {
   quizId: string;
 }
 
-const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = ({
-  quizId,
-}) => {
+const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = ({ quizId }) => {
   const router = useRouter();
   const [quizSummary, setQuizSummary] = useState<QuizSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInteractive, setIsInteractive] = useState<boolean>(false);
 
   useEffect(() => {
     if (!quizId) {
@@ -83,22 +82,15 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
                 router.push(`/evaluation/quiz/${quizId}/attempt/${attempt.id}`)
               }
             >
-              {/* Línea superior: Intento */}
               <div className="text-sm text-gray-800 font-semibold">
                 📘 Intento #{index + 1}
               </div>
-
-              {/* Línea del medio: Fecha y Nota */}
               <div className="flex justify-between items-center text-sm text-gray-700">
                 <span>📅 {formatDate(attempt.date)}</span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${gradeColor} font-bold`}
-                >
+                <span className={`text-xs px-2 py-0.5 rounded-full ${gradeColor} font-bold`}>
                   Nota: {attempt.grade}
                 </span>
               </div>
-
-              {/* Última línea: Ver intento */}
               <div className="flex items-center gap-2 text-sm text-blue-600">
                 ✏️ <span className="truncate">Ver intento</span>
               </div>
@@ -111,7 +103,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
 
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* Cabecera estilo Card */}
       <div className="bg-white rounded-xl p-5 shadow-md mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
         <div className="flex-1">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1">
@@ -121,11 +112,30 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
           <p className="text-gray-700 text-sm font-semibold">
             Preguntas: {quizSummary.questions}
           </p>
+
+          {/* Toggle elegante */}
+          <div className="flex items-center gap-3 mt-4">
+            <span className="text-sm text-gray-700 font-medium">Modo Interactivo</span>
+            <button
+              onClick={() => setIsInteractive(!isInteractive)}
+              className={`relative w-11 h-6 flex items-center rounded-full transition-colors duration-300 ${
+                isInteractive ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            >
+              <span
+                className={`absolute left-0 top-0 w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-300 ${
+                  isInteractive ? "translate-x-full" : ""
+                }`}
+              ></span>
+            </button>
+          </div>
         </div>
+
+        {/* Botones */}
         <div className="flex flex-col gap-2 mt-2 sm:mt-0 sm:ml-6 w-full sm:w-auto">
           <button
             onClick={() =>
-              router.push(`/evaluation/quiz/${quizId}/execution`)
+              router.push(`/evaluation/quiz/${quizId}/execution?interactive=${isInteractive}`)
             }
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full"
           >
@@ -140,7 +150,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
         </div>
       </div>
 
-      {/* Intentos Anteriores */}
       <h2 className="text-xl font-semibold mb-4">Intentos Anteriores</h2>
 
       {validAttempts.length === 0 ? (
@@ -149,7 +158,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
         </div>
       ) : (
         <>
-          {/* Tabla para desktop */}
           <div className="hidden sm:block">
             <QuizAttemptsTable
               quizId={quizId}
@@ -157,8 +165,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
               generateHref={(id) => `/evaluation/quiz/${quizId}/attempt/${id}`}
             />
           </div>
-
-          {/* Cards para mobile */}
           <QuizAttemptsCardList />
         </>
       )}

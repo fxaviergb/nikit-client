@@ -7,11 +7,18 @@ export const metadata: Metadata = {
   description: "Página para la ejecución de evaluaciones con preguntas de opción múltiple.",
 };
 
-// Componente del servidor que pasa `quizId` al cliente
-const EvaluationExecutionPage = ({ params }: { params: { id: string } }) => {
+const EvaluationExecutionPage = ({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { interactive?: string };
+}) => {
+  const isInteractive = searchParams.interactive === "true";
+
   return (
     <DefaultLayout>
-      <EvaluationExecutionClient quizId={params.id} />
+      <EvaluationExecutionClient quizId={params.id} isInteractive={isInteractive} />
     </DefaultLayout>
   );
 };
