@@ -25,9 +25,9 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
   const hasFetched = useRef(false);
 
   useEffect(() => {
-    if (hasFetched.current) return; 
+    if (hasFetched.current) return;
     hasFetched.current = true;
-  
+
     const loadQuestions = async () => {
       try {
         const { questions, attemptId } = await fetchQuizQuestions(quizId);
@@ -39,7 +39,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
         setLoading(false);
       }
     };
-  
+
     loadQuestions();
   }, [quizId]);
 
@@ -52,7 +52,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
       alert("No se pudo identificar el intento.");
       return;
     }
-  
+
     const payload = {
       executionDate: new Date().toISOString(),
       questions: questions.map((q) => ({
@@ -63,7 +63,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
         })),
       })),
     };
-  
+
     try {
       const result = await sendQuizAnswers(attemptId, payload);
       router.push(`/evaluation/quiz/${result.quizId}/attempt/${result.attemptId}`);
@@ -75,6 +75,8 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
   if (loading) return <p>Cargando preguntas...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
+  const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F']; // soporte adicional si hay más de 4
+
   return (
     <div className="container mx-auto p-6">
       <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
@@ -83,11 +85,13 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
       </div>
 
       <div className="space-y-6">
-        {questions.map((question) => (
+        {questions.map((question, qIndex) => (
           <div key={question.id} className="bg-white shadow-md rounded-lg p-4">
-            <h2 className="text-lg font-semibold text-gray-800">{question.question}</h2>
+            <h2 className="text-lg font-semibold text-gray-800">
+              {qIndex + 1}. {question.question}
+            </h2>
             <div className="mt-2 space-y-2">
-              {question.options.map((option) => (
+              {question.options.map((option, oIndex) => (
                 <label
                   key={option.id}
                   className={`block p-2 border rounded-md cursor-pointer ${
@@ -104,6 +108,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({ q
                     onChange={() => handleAnswerSelect(question.id, option.id)}
                     className="mr-2"
                   />
+                  <span className="font-semibold">{optionLabels[oIndex]}. </span>
                   {option.option}
                 </label>
               ))}
