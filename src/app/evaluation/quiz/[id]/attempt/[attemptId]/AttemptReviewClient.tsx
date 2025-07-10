@@ -16,6 +16,7 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!quizId || !attemptId) {
@@ -40,10 +41,11 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
   }, [quizId, attemptId]);
 
   const toggleFeedback = (questionId: string) => {
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [questionId]: !prev[questionId]
-    }));
+    setExpandedQuestions((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
+  };
+
+  const toggleCorrectAnswer = (questionId: string) => {
+    setShowCorrectAnswers((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
   };
 
   if (loading) return <p className="text-gray-500">Cargando revisión del intento...</p>;
@@ -51,6 +53,8 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
   if (!reviewData || !Array.isArray(reviewData.review)) {
     return <p>No se encontró la revisión.</p>;
   }
+
+  const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   return (
     <div className="container mx-auto p-6">
@@ -69,16 +73,21 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
 
       {/* Preguntas y opciones */}
       <div className="space-y-6">
-        {reviewData.review.map((question: ReviewQuestion) => {
-          const selectedOption = question.options.find(opt => opt.review.isSelected);
+        {reviewData.review.map((question: ReviewQuestion, qIndex: number) => {
+          const selectedOption = question.options.find((opt) => opt.review.isSelected);
           const selectedIsCorrect = selectedOption?.review?.isCorrect;
+          const selectedIsIncorrect = selectedOption?.review?.isSelected && !selectedOption?.review?.isCorrect;
           const isExpanded = expandedQuestions[question.id] || false;
+          const showCorrect = showCorrectAnswers[question.id] || false;
+          const correctOption = question.options.find((opt) => opt.review.isCorrect);
 
           return (
             <div key={question.id} className="bg-white shadow-md rounded-lg p-4">
-              <h2 className="text-lg font-semibold text-gray-800">{question.question}</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                {qIndex + 1}. {question.question}
+              </h2>
               <div className="mt-2 space-y-2">
-                {question.options.map((option: ReviewOption) => {
+                {question.options.map((option: ReviewOption, oIndex: number) => {
                   const { isCorrect, isSelected, feedback } = option.review;
 
                   let bgClass = "border-gray-300";
@@ -96,6 +105,7 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
                     <div key={option.id} className="space-y-1">
                       <div className={`p-2 border rounded-md flex items-center space-x-2 ${bgClass}`}>
                         <span>{icon}</span>
+                        <span className="font-semibold">{optionLabels[oIndex]}.</span>
                         <span>{option.option}</span>
                       </div>
 
@@ -109,7 +119,7 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
                 })}
               </div>
 
-              {/* Botón minimalista + retroalimentación general (estilo original) */}
+              {/* Mostrar retroalimentación general */}
               {selectedIsCorrect && question.review?.feedback?.trim() && (
                 <div className="mt-4">
                   <button
@@ -131,6 +141,46 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({ quizId, attem
                     <div className="mt-2 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
                       <p className="font-semibold mb-1">Retroalimentación</p>
                       {question.review.feedback}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Mostrar respuesta correcta cuando la seleccionada es incorrecta */}
+              {selectedIsIncorrect && correctOption && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => toggleCorrectAnswer(question.id)}
+                    className="text-sm text-blue-600 flex items-center space-x-1 focus:outline-none"
+                  >
+                    <span className="hover:underline">
+                      {showCorrect ? "Ocultar respuesta correcta" : "Mostrar respuesta correcta"}
+                    </span>
+                    <span
+                      className={`transform transition-transform duration-300 ${
+                        showCorrect ? "rotate-90" : "rotate-0"
+                      }`}
+                    >
+                      ▶
+                    </span>
+                  </button>
+                  {showCorrect && (
+                    <div className="mt-2 p-4 bg-green-50 border-l-4 border-green-500 text-green-800 rounded">
+                      <p className="font-semibold mb-1">Respuesta correcta:</p>
+                      <p>
+                        <span className="font-semibold">
+                          {
+                            optionLabels[
+                              question.options.findIndex((opt) => opt.id === correctOption.id)
+                            ]
+                          }
+                          .{" "}
+                        </span>
+                        {correctOption.option}
+                      </p>
+                      {correctOption.review?.feedback?.trim() && (
+                        <p className="mt-2 text-sm">{correctOption.review.feedback}</p>
+                      )}
                     </div>
                   )}
                 </div>

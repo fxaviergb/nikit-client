@@ -1,6 +1,9 @@
 export interface QuizOption {
     id: string;
     option: string;
+    answer: {
+      isCorrect: boolean;
+    };
   }
   
   export interface QuizQuestion {

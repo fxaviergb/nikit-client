@@ -128,7 +128,6 @@ const ConstructorClient: React.FC = () => {
     }
     return true;
   };
-  
 
   const handleSubmit = async () => {
     if (!silentlyValidateQuiz()) return;
@@ -177,31 +176,14 @@ const ConstructorClient: React.FC = () => {
     }
   };
 
-  const truncate = (text: string, length: number) => {
-    return text.length > length ? text.substring(0, length) + "..." : text;
-  };
-
   return (
-    <div className="p-6 space-y-8 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center">
+    <div className="p-4 sm:p-6 space-y-8 max-w-5xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h1 className="text-2xl font-bold">Constructor de Cuestionario</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={validateQuiz}
-            className="text-sm bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-          >
-            Validar
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Guardar
-          </button>
-          <button
-            onClick={toggleView}
-            className="flex items-center gap-2 text-sm bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
-          >
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button onClick={validateQuiz} className="text-sm bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 w-full sm:w-auto">Validar</button>
+          <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto">Guardar</button>
+          <button onClick={toggleView} className="flex items-center justify-center gap-2 text-sm bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 w-full sm:w-auto">
             {showJson ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />} {showJson ? "Ocultar JSON" : "Ver/Editar JSON"}
           </button>
         </div>
@@ -227,123 +209,60 @@ const ConstructorClient: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Tópico</label>
-              <select
-                className="w-full p-2 border rounded"
-                value={selectedTopicId}
-                onChange={(e) => setSelectedTopicId(e.target.value)}
-              >
+              <select className="w-full p-2 border rounded" value={selectedTopicId} onChange={(e) => setSelectedTopicId(e.target.value)}>
                 <option value="">Selecciona un tópico</option>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
+                {topics.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Nombre del cuestionario</label>
-              <input
-                className="w-full p-2 border rounded"
-                type="text"
-                value={quizName}
-                onChange={(e) => setQuizName(e.target.value)}
-                placeholder="Ej. Fundamentos de DevOps"
-              />
+              <input className="w-full p-2 border rounded" type="text" value={quizName} onChange={(e) => setQuizName(e.target.value)} placeholder="Ej. Fundamentos de DevOps" />
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-1">Descripción</label>
-              <textarea
-                className="w-full p-2 border rounded"
-                value={quizDescription}
-                onChange={(e) => setQuizDescription(e.target.value)}
-                placeholder="Describe brevemente el propósito del cuestionario..."
-              />
+              <textarea className="w-full p-2 border rounded" value={quizDescription} onChange={(e) => setQuizDescription(e.target.value)} placeholder="Describe brevemente el propósito del cuestionario..." />
             </div>
           </div>
 
           <div className="space-y-6">
             {questions.map((q, qIndex) => (
               <div key={qIndex} className="border rounded-md">
-                <button
-                  type="button"
-                  onClick={() => setOpenQuestionIndex(openQuestionIndex === qIndex ? null : qIndex)}
-                  className="w-full text-left bg-blue-50 px-3 py-2 font-medium flex justify-between items-center text-sm"
-                >
+                <button type="button" onClick={() => setOpenQuestionIndex(openQuestionIndex === qIndex ? null : qIndex)} className="w-full text-left bg-blue-50 px-3 py-2 font-medium flex justify-between items-center text-sm">
                   <div className="flex items-center gap-2">
                     <ChevronDown className={`w-4 h-4 transition-transform ${openQuestionIndex === qIndex ? 'rotate-180' : ''}`} />
-                    <span className="truncate">{`Pregunta ${qIndex + 1}: ${truncate(q.question, MAX_TITLE_LENGTH)}`}</span>
+                    <span className="truncate">{`Pregunta ${qIndex + 1}: ${q.question}`}</span>
                   </div>
                   <Trash2 onClick={() => removeQuestion(qIndex)} className="w-4 h-4 text-red-500 cursor-pointer" />
                 </button>
                 {openQuestionIndex === qIndex && (
                   <div className="p-4 space-y-3 bg-white text-sm">
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 border rounded"
-                      placeholder="Texto de la pregunta"
-                      value={q.question}
-                      onChange={(e) => handleQuestionChange(qIndex, "question", e.target.value)}
-                    />
+                    <input type="text" className="w-full px-2 py-1 border rounded" placeholder="Texto de la pregunta" value={q.question} onChange={(e) => handleQuestionChange(qIndex, "question", e.target.value)} />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {q.options.map((opt: any, oIndex: number) => (
                         <div key={oIndex} className="border rounded p-3 bg-gray-50 space-y-2 relative">
-                          <button
-                            onClick={() => removeOptionFromQuestion(qIndex, oIndex)}
-                            className="absolute top-1 right-1 text-red-400 hover:text-red-600"
-                            title="Eliminar opción"
-                          >
-                            <X size={16} />
-                          </button>
-                          <input
-                            type="text"
-                            className="w-full px-2 py-1 border rounded"
-                            placeholder={`Opción ${oIndex + 1}`}
-                            value={opt.option}
-                            onChange={(e) => handleOptionChange(qIndex, oIndex, "option", e.target.value)}
-                          />
+                          <button onClick={() => removeOptionFromQuestion(qIndex, oIndex)} className="absolute top-1 right-1 text-red-400 hover:text-red-600" title="Eliminar opción"><X size={16} /></button>
+                          <input type="text" className="w-full px-2 py-1 border rounded" placeholder={`Opción ${oIndex + 1}`} value={opt.option} onChange={(e) => handleOptionChange(qIndex, oIndex, "option", e.target.value)} />
                           <div className="flex items-center gap-2 text-xs">
-                            <input
-                              type="checkbox"
-                              checked={opt.answer.isCorrect}
-                              onChange={(e) => handleOptionChange(qIndex, oIndex, "isCorrect", e.target.checked)}
-                            />
+                            <input type="checkbox" checked={opt.answer.isCorrect} onChange={(e) => handleOptionChange(qIndex, oIndex, "isCorrect", e.target.checked)} />
                             <label>¿Correcta?</label>
                           </div>
-                          <textarea
-                            className="w-full px-2 py-1 border rounded text-xs"
-                            placeholder="Justificación"
-                            rows={2}
-                            value={opt.answer.justification}
-                            onChange={(e) => handleOptionChange(qIndex, oIndex, "justification", e.target.value)}
-                          />
+                          <textarea className="w-full px-2 py-1 border rounded text-xs" placeholder="Justificación" rows={2} value={opt.answer.justification} onChange={(e) => handleOptionChange(qIndex, oIndex, "justification", e.target.value)} />
                         </div>
                       ))}
                     </div>
 
-                    <button
-                      onClick={() => addOptionToQuestion(qIndex)}
-                      className="text-xs mt-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                    >
-                      + Añadir opción
-                    </button>
+                    <button onClick={() => addOptionToQuestion(qIndex)} className="text-xs mt-2 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">+ Añadir opción</button>
 
-                    <textarea
-                      className="w-full px-2 py-1 border rounded text-sm"
-                      placeholder="Justificación general de la pregunta"
-                      rows={2}
-                      value={q.justification}
-                      onChange={(e) => handleQuestionChange(qIndex, "justification", e.target.value)}
-                    />
+                    <textarea className="w-full px-2 py-1 border rounded text-sm" placeholder="Justificación general de la pregunta" rows={2} value={q.justification} onChange={(e) => handleQuestionChange(qIndex, "justification", e.target.value)} />
                   </div>
                 )}
               </div>
             ))}
 
-            <button
-              onClick={addQuestion}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-            >
+            <button onClick={addQuestion} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
               <Plus className="w-4 h-4" /> Añadir pregunta
             </button>
           </div>
