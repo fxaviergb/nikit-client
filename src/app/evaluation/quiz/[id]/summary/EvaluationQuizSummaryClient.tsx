@@ -15,7 +15,9 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
   const [quizSummary, setQuizSummary] = useState<QuizSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInteractive, setIsInteractive] = useState<boolean>(false);
+  const [isInteractive, setIsInteractive] = useState<boolean>(true);
+  const [isShuffled, setIsShuffled] = useState<boolean>(true);
+  const [showOptions, setShowOptions] = useState<boolean>(false);
 
   useEffect(() => {
     if (!quizId) {
@@ -103,51 +105,87 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="bg-white rounded-xl p-5 shadow-md mb-6 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
-        <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1">
-            {quizSummary.name}
-          </h1>
-          <p className="text-gray-600 text-sm mb-1">{quizSummary.description}</p>
-          <p className="text-gray-700 text-sm font-semibold">
-            Preguntas: {quizSummary.questions}
-          </p>
+      <div className="bg-white rounded-xl p-5 shadow-md mb-6 flex flex-col gap-4">
+        {/* Parte superior del card */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="flex-1">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1">
+              {quizSummary.name}
+            </h1>
+            <p className="text-gray-600 text-sm mb-1">{quizSummary.description}</p>
+            <p className="text-gray-700 text-sm font-semibold">
+              Preguntas: {quizSummary.questions}
+            </p>
+          </div>
 
-          {/* Toggle elegante */}
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-sm text-gray-700 font-medium">Modo Interactivo</span>
+          <div className="flex flex-col gap-2 sm:mt-0 sm:ml-6 w-full sm:w-auto">
             <button
-              onClick={() => setIsInteractive(!isInteractive)}
-              className={`relative w-11 h-6 flex items-center rounded-full transition-colors duration-300 ${
-                isInteractive ? "bg-blue-600" : "bg-gray-300"
-              }`}
+              onClick={() =>
+                router.push(
+                  `/evaluation/quiz/${quizId}/execution?interactive=${isInteractive}&shuffled=${isShuffled}`
+                )
+              }
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full"
             >
-              <span
-                className={`absolute left-0 top-0 w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-300 ${
-                  isInteractive ? "translate-x-full" : ""
-                }`}
-              ></span>
+              Iniciar
+            </button>
+            <button
+              onClick={() => router.push("/learn")}
+              className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 w-full"
+            >
+              Volver
             </button>
           </div>
         </div>
 
-        {/* Botones */}
-        <div className="flex flex-col gap-2 mt-2 sm:mt-0 sm:ml-6 w-full sm:w-auto">
+        {/* Botón acordeón */}
+        <div className="mt-1">
           <button
-            onClick={() =>
-              router.push(`/evaluation/quiz/${quizId}/execution?interactive=${isInteractive}`)
-            }
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full"
+            onClick={() => setShowOptions(!showOptions)}
+            className="text-sm text-blue-600 hover:underline font-medium"
           >
-            Iniciar
-          </button>
-          <button
-            onClick={() => router.push(`/learn`)}
-            className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 w-full"
-          >
-            Volver
+            {showOptions ? "Ocultar opciones avanzadas" : "Mostrar opciones avanzadas"}
           </button>
         </div>
+
+        {/* Contenido del acordeón */}
+        {showOptions && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 transition-all duration-300 ease-in-out">
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Modo Interactivo</span>
+                <button
+                  onClick={() => setIsInteractive(!isInteractive)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                    isInteractive ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      isInteractive ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">Opciones aleatorias</span>
+                <button
+                  onClick={() => setIsShuffled(!isShuffled)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                    isShuffled ? "bg-blue-600" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      isShuffled ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <h2 className="text-xl font-semibold mb-4">Intentos Anteriores</h2>
