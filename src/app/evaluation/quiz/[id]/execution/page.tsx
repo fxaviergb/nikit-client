@@ -12,13 +12,18 @@ const EvaluationExecutionPage = ({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { interactive?: string };
+  searchParams: { interactive?: string; shuffled?: string };
 }) => {
   const isInteractive = searchParams.interactive === "true";
+  const isShuffled = searchParams.shuffled === "true";
 
   return (
     <DefaultLayout>
-      <EvaluationExecutionClient quizId={params.id} isInteractive={isInteractive} />
+      <EvaluationExecutionClient
+        quizId={params.id}
+        isInteractive={isInteractive}
+        isShuffled={isShuffled}
+      />
     </DefaultLayout>
   );
 };

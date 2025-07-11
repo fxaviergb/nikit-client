@@ -7,6 +7,7 @@ import { fetchQuizQuestions, sendQuizAnswers } from "@/services/api";
 interface EvaluationExecutionClientProps {
   quizId: string;
   isInteractive: boolean;
+  isShuffled: boolean;
 }
 
 interface QuizOption {
@@ -26,6 +27,7 @@ interface Question {
 const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
   quizId,
   isInteractive,
+  isShuffled,
 }) => {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -37,6 +39,11 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
 
   const hasFetched = useRef(false);
 
+  // ✅ Función para barajar un array
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    return [...array].sort(() => Math.random() - 0.5);
+  };
+
   useEffect(() => {
     if (hasFetched.current) return;
     hasFetched.current = true;
@@ -44,7 +51,14 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
     const loadQuestions = async () => {
       try {
         const { questions, attemptId } = await fetchQuizQuestions(quizId);
-        setQuestions(questions);
+        const processed = isShuffled
+          ? questions.map((q) => ({
+              ...q,
+              options: shuffleArray(q.options),
+            }))
+          : questions;
+
+        setQuestions(processed);
         setAttemptId(attemptId);
       } catch (err) {
         setError("Error cargando el cuestionario");
@@ -54,10 +68,9 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
     };
 
     loadQuestions();
-  }, [quizId]);
+  }, [quizId, isShuffled]);
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
-    // Si ya fue respondida (modo interactivo), no permitir cambio
     if (isInteractive && answeredQuestions.has(questionId)) return;
 
     setSelectedAnswers((prev) => ({ ...prev, [questionId]: optionId }));
@@ -108,14 +121,12 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
         : "border-gray-300";
     }
 
-    // Modo interactivo: pregunta ya respondida
     if (answeredQuestions.has(question.id)) {
       if (option.answer.isCorrect) return "bg-green-100 border-green-500 text-green-800";
       if (option.id === selectedOptionId) return "bg-red-100 border-red-500 text-red-800";
       return "border-gray-300 opacity-60";
     }
 
-    // Pregunta aún no respondida
     return selectedOptionId === option.id
       ? "bg-blue-100 border-blue-500"
       : "border-gray-300";
