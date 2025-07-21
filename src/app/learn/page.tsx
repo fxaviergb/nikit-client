@@ -5,7 +5,7 @@ import { fetchTopics } from "@/services/api";
 import { GenericListItem } from "@/types/generic-list-item";
 
 export const metadata: Metadata = {
-  title: "Learning List | TailAdmin - Next.js Dashboard Template",
+  title: "Learning List | NikIT - Next.js Dashboard Template",
   description: "Esta es la página de aprendizaje.",
 };
 

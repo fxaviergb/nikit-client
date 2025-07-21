@@ -3,7 +3,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import TopicsClient from "./TopicsClient";
 
 export const metadata: Metadata = {
-  title: "Evaluation List | TailAdmin - Next.js Dashboard Template",
+  title: "Evaluation List | NikIT - Next.js Dashboard Template",
   description: "Esta es la página de evaluación, mostrando la lista de temas.",
 };
 

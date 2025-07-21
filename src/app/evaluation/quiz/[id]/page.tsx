@@ -3,7 +3,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import EvaluationQuizClient from "./EvaluationQuizClient";
 
 export const metadata: Metadata = {
-  title: "Evaluation Quiz | TailAdmin - Next.js Dashboard Template",
+  title: "Evaluation Quiz | NikIT - Next.js Dashboard Template",
   description: "Página de evaluación de cuestionarios en TailAdmin.",
 };
 
