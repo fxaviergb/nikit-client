@@ -3,7 +3,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 import AttemptReviewClient from "./AttemptReviewClient";
 
 export const metadata: Metadata = {
-  title: "Revisión del intento | TailAdmin",
+  title: "Revisión del intento | NikIT",
   description: "Pantalla de revisión de un intento de evaluación",
 };
 

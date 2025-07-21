@@ -3,7 +3,7 @@ import ConstructorClient from "./ConstructorClient";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 export const metadata: Metadata = {
-  title: "Constructor | TailAdmin",
+  title: "Constructor | NikIT",
   description: "Página para construir evaluaciones.",
 };
 
