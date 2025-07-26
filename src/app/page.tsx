@@ -1,6 +1,7 @@
 import ECommerce from "@/components/Dashboard/E-commerce";
 import { Metadata } from "next";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title:
@@ -9,11 +10,13 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return (
+  redirect("/auth/signin");
+  return null;
+  /*return (
     <>
       <DefaultLayout>
         <ECommerce />
       </DefaultLayout>
     </>
-  );
+  );*/
 }
