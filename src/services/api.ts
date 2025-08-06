@@ -4,8 +4,10 @@ import { GenericListMapper } from "@/utils/GenericListMapper";
 import { MockData } from "@/mocks/MockData"; // Importamos los datos mock
 import { QuizSummaryMapper } from "@/utils/QuizSummaryMapper";
 import { QuizSummary, QuizSummaryApiResponse } from "@/types/quiz-summary";
-import { EvaluationAnswerPayload, QuizApiResponse, QuizGradeResponse, QuizQuestion } from "@/types/quiz"; // ✅ Importamos los tipos
+import { EvaluationAnswerPayload, QuizApiResponse, QuizGradeResponse, QuizQuestion } from "@/types/quiz"; 
 import { AttemptReviewResponse } from "@/types/attempt-review";
+import { Login } from "@/types/login";
+import { parseCookies, destroyCookie } from "nookies";
 
 
 // Leer variable de entorno
@@ -19,10 +21,64 @@ const apiClient = axios.create({
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
-    "Authorization": AUTH_TOKEN,
     "ngrok-skip-browser-warning": "true"
   },
 });
+
+// Interceptor para agregar el token de las cookies en cada request
+apiClient.interceptors.request.use(
+  config => {
+    const cookies = parseCookies();
+    const token = cookies.token;
+
+    config.headers = config.headers ?? {};
+
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete config.headers["Authorization"];
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
+
+// Interceptor para manejar errores 401 globalmente
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      destroyCookie(null, "token");
+      if (typeof window !== "undefined") {
+        window.location.href = "/auth/signin";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// 🔹 **Función para iniciar sesión**
+export const login = async (
+  username: string,
+  password: string
+): Promise<Login> => {
+  try {
+    const response = await axios.post<Login>(
+      `${API_BASE_URL}/v1/auth/login`,
+      { username, password },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error logging in:", error);
+    throw error;
+  }
+}
 
 // 🔹 **Función para obtener la lista de conocimientos**
 export const fetchKnowledges = async (): Promise<GenericListItem[]> => {
