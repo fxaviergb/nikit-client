@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  redirect("/auth/signin");
-  return null;
-  /*return (
+  /*redirect("/auth/signin");
+  return null;*/
+  return (
     <>
       <DefaultLayout>
         <ECommerce />
       </DefaultLayout>
     </>
-  );*/
+  );
 }

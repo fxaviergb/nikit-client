@@ -16,6 +16,7 @@
     "jsvectormap": "^1.6.0",
     "lucide-react": "^0.487.0",
     "next": "^14.2.4",
+    "nookies": "^2.5.2",
     "react": "^18",
     "react-apexcharts": "^1.4.1",
     "react-dom": "^18",

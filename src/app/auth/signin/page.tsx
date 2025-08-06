@@ -1,14 +1,46 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Metadata } from "next";
+import { login } from "@/services/api";
+import { Login } from "@/types/login";
+import { useRouter } from "next/navigation";
+import { setCookie } from "nookies";
 
-export const metadata: Metadata = {
-  title: "Next.js SignIn Page | NikIT - Next.js Dashboard Template",
-  description: "This is Next.js Signin Page TailAdmin Dashboard Template",
-};
 
 const SignIn: React.FC = () => {
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!username || !password) {
+      setError("Se requieren nombre de usuario y contraseña");
+      return;
+    }
+
+    try {
+      const data: Login = await login(username, password);
+      // Guarda el token en una cookie
+      setCookie(null, "token", data.token, {
+        path: "/",
+        maxAge: 60 * 60 * 24, // 1 día
+      });
+      router.push("/"); // Redirige a la pantalla de inicio
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        setError("Credenciales incorrectas");
+      } else {
+        setError("Ocurrió un error. Por favor, inténtalo de nuevo");
+      }
+    }
+  };
+
   return (
     <div
       className="flex min-h-screen items-center justify-center"
@@ -34,7 +66,7 @@ const SignIn: React.FC = () => {
               />
             </Link>
             <p className="2xl:px-10">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit suspendisse.
+              Responde, recibe retroalimentación y mejora tu aprendizaje!
             </p>
             <span className="mt-10 inline-block">
               <svg
@@ -162,19 +194,21 @@ const SignIn: React.FC = () => {
         </div>
         <div className="w-full xl:w-1/2 border-t xl:border-t-0 xl:border-l-2 border-stroke dark:border-strokedark flex items-center">
           <div className="w-full p-8 sm:p-12 xl:p-10">
-            <span className="mb-1.5 block font-medium">Start for free</span>
+            <span className="mb-1.5 block font-medium">Empieza ahora</span>
             <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-              Sign In to NikIT
+              Iniciar Sesión
             </h2>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
-                  Email
+                  Nombre de usuario
                 </label>
                 <div className="relative">
                   <input
-                    type="email"
-                    placeholder="Enter your email"
+                    type="text"
+                    placeholder="Ingresa tu nombre de usuario"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
                     className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                   />
                   <span className="absolute right-4 top-4">
@@ -184,12 +218,14 @@ const SignIn: React.FC = () => {
               </div>
               <div className="mb-6">
                 <label className="mb-2.5 block font-medium text-black dark:text-white">
-                  Password
+                  Contraseña
                 </label>
                 <div className="relative">
                   <input
                     type="password"
-                    placeholder="6+ Characters, 1 Capital letter"
+                    placeholder="Ingresa tu contraseña"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                     className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
                   />
                   <span className="absolute right-4 top-4">
@@ -197,14 +233,26 @@ const SignIn: React.FC = () => {
                   </span>
                 </div>
               </div>
+              {error && (
+                <div className="mb-4 text-center text-red-500 font-medium">
+                  {error}
+                </div>
+              )}
               <div className="mb-5">
                 <input
                   type="submit"
-                  value="Sign In"
+                  value="Ingresar"
                   className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
                 />
               </div>
-              <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
+              <button
+                type="button"
+                className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50"
+                onClick={() => {
+                  // Aquí va la lógica para iniciar sesión con Google
+                  // Por ejemplo: window.location.href = "URL_DE_GOOGLE_AUTH"
+                }}
+              >
                 <span>
                   <svg
                       width="20"
@@ -238,13 +286,13 @@ const SignIn: React.FC = () => {
                       </defs>
                     </svg>
                 </span>
-                Sign in with Google
+                Ingresar con Google
               </button>
               <div className="mt-6 text-center">
                 <p>
-                  Don’t have any account?{" "}
+                  No tienes una cuenta?{" "}
                   <Link href="/auth/signup" className="text-primary">
-                    Sign Up
+                    Regístrate
                   </Link>
                 </p>
               </div>
