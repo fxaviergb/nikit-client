@@ -8,6 +8,7 @@ interface EvaluationExecutionClientProps {
   quizId: string;
   isInteractive: boolean;
   isShuffled: boolean;
+  questionCount?: number;
 }
 
 interface QuizOption {
@@ -28,6 +29,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
   quizId,
   isInteractive,
   isShuffled,
+  questionCount
 }) => {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -50,7 +52,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
 
     const loadQuestions = async () => {
       try {
-        const { questions, attemptId } = await fetchQuizQuestions(quizId);
+        const { questions, attemptId } = await fetchQuizQuestions(quizId, questionCount);
         const processed = isShuffled
           ? questions.map((q) => ({
               ...q,
@@ -68,7 +70,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
     };
 
     loadQuestions();
-  }, [quizId, isShuffled]);
+  }, [quizId, isShuffled, questionCount]);
 
   const handleAnswerSelect = (questionId: string, optionId: string) => {
     if (isInteractive && answeredQuestions.has(questionId)) return;

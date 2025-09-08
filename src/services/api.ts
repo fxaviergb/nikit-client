@@ -166,19 +166,28 @@ export const fetchQuizSummary = async (quizId: string): Promise<QuizSummary | nu
 };
 
 // Función para obtener preguntas del cuestionario
-export const fetchQuizQuestions = async (quizId: string): Promise<{ questions: QuizQuestion[], attemptId: string }> => {
+export const fetchQuizQuestions = async (
+  quizId: string,
+  questionCount?: number
+): Promise<{ questions: QuizQuestion[]; attemptId: string }> => {
   try {
-    const response = await apiClient.get<QuizApiResponse>(`/api/v1/evaluation/create/${quizId}`);
+    
+    const params = questionCount !== undefined ? { questionCount } : undefined;
+
+    const response = await apiClient.get<QuizApiResponse>(
+      `/api/v1/evaluation/create/${quizId}`,
+      { params }
+    );
+
     console.log(`Respuesta del API para quizId ${quizId}:`, response.data);
 
     const quizData = response.data;
-
     const attempt = quizData?.attempts?.[0];
     if (!attempt?.quiz?.questions) throw new Error("Formato de datos inválido");
 
     return {
       questions: attempt.quiz.questions,
-      attemptId: attempt.id, // extraemos el ID del intento
+      attemptId: attempt.id,
     };
   } catch (error) {
     console.error("Error al obtener preguntas:", error);

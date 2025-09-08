@@ -17,6 +17,7 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
   const [error, setError] = useState<string | null>(null);
   const [isInteractive, setIsInteractive] = useState<boolean>(true);
   const [isShuffled, setIsShuffled] = useState<boolean>(true);
+  const [questionCount, setQuestionCount] = useState<number>(3);
   const [showOptions, setShowOptions] = useState<boolean>(false);
 
   useEffect(() => {
@@ -76,6 +77,11 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
               ? "bg-yellow-100 text-yellow-800"
               : "bg-red-100 text-red-800";
 
+          const efficiency =
+            attempt.efficiencyPercentage !== undefined
+              ? `${attempt.efficiencyPercentage.toFixed(2)}%`
+              : "N/A";
+
           return (
             <div
               key={attempt.id}
@@ -89,9 +95,16 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
               </div>
               <div className="flex justify-between items-center text-sm text-gray-700">
                 <span>📅 {formatDate(attempt.date)}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${gradeColor} font-bold`}>
-                  Nota: {attempt.grade}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${gradeColor} font-bold`}>
+                    Nota: {attempt.grade}
+                  </span>
+                  {attempt.efficiencyPercentage !== undefined && (
+                    <span className="text-[11px] text-gray-500 font-medium mt-0.5">
+                      {attempt.efficiencyPercentage.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 text-sm text-blue-600">
                 ✏️ <span className="truncate">Ver intento</span>
@@ -106,7 +119,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="bg-white rounded-xl p-5 shadow-md mb-6 flex flex-col gap-4">
-        {/* Parte superior del card */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div className="flex-1">
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-1">
@@ -122,7 +134,7 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
             <button
               onClick={() =>
                 router.push(
-                  `/evaluation/quiz/${quizId}/execution?interactive=${isInteractive}&shuffled=${isShuffled}`
+                  `/evaluation/quiz/${quizId}/execution?interactive=${isInteractive}&shuffled=${isShuffled}&questionCount=${questionCount}`
                 )
               }
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full"
@@ -138,7 +150,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
           </div>
         </div>
 
-        {/* Botón acordeón */}
         <div className="mt-1">
           <button
             onClick={() => setShowOptions(!showOptions)}
@@ -148,7 +159,6 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
           </button>
         </div>
 
-        {/* Contenido del acordeón */}
         {showOptions && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 transition-all duration-300 ease-in-out">
             <div className="flex flex-wrap gap-6">
@@ -182,6 +192,24 @@ const EvaluationQuizClientSummary: React.FC<EvaluationQuizClientSummaryProps> = 
                     }`}
                   />
                 </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 w-full sm:w-auto">
+                <label htmlFor="questionCount" className="text-sm font-medium text-gray-700">
+                  Número de preguntas
+                </label>
+                <select
+                  id="questionCount"
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm sm:w-28 w-full"
+                >
+                  {Array.from({ length: 18 }, (_, i) => i + 3).map((num) => (
+                    <option key={num} value={num}>
+                      {num}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
