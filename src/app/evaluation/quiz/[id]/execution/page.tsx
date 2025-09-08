@@ -12,10 +12,17 @@ const EvaluationExecutionPage = ({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { interactive?: string; shuffled?: string };
+  searchParams: {
+    interactive?: string;
+    shuffled?: string;
+    questionCount?: string;
+  };
 }) => {
   const isInteractive = searchParams.interactive === "true";
   const isShuffled = searchParams.shuffled === "true";
+  const questionCount = searchParams.questionCount
+    ? parseInt(searchParams.questionCount, 10)
+    : undefined;
 
   return (
     <DefaultLayout>
@@ -23,6 +30,7 @@ const EvaluationExecutionPage = ({
         quizId={params.id}
         isInteractive={isInteractive}
         isShuffled={isShuffled}
+        questionCount={questionCount}
       />
     </DefaultLayout>
   );

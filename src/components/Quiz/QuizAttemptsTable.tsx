@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 interface QuizAttemptsTableProps {
   quizId: string;
   attempts: QuizAttempt[];
-  generateHref: (id: string) => string; // 📌 URL dinámica
+  generateHref: (id: string) => string;
 }
 
 const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({ quizId, attempts, generateHref }) => {
@@ -17,29 +17,41 @@ const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({ quizId, attempts,
           <thead>
             <tr className="bg-gray-2 text-center dark:bg-meta-4">
               <th className="px-4 py-4 font-medium text-black dark:text-white"># Intento</th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">Fecha</th> 
               <th className="px-4 py-4 font-medium text-black dark:text-white">Calificación</th>
-              <th className="px-4 py-4 font-medium text-black dark:text-white">Fecha</th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">Eficiencia</th>
               <th className="px-4 py-4 font-medium text-black dark:text-white">Acción</th>
             </tr>
           </thead>
           <tbody>
             {attempts.map((attempt, index) => (
               <tr key={attempt.id} className="text-center">
-                {/* # Intento (Número secuencial) */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">{index + 1}</td>
+                {/* # Intento */}
+                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                  {index + 1}
+                </td>
 
-                {/* Calificación combinada */}
+                {/* Fecha */}
+                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                  {attempt.date}
+                </td>
+
+                {/* Calificación */}
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   {attempt.grade} / {attempt.maxGrade}
                 </td>
 
-                {/* Fecha */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">{attempt.date}</td>
+                {/* Eficiencia */}
+                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                  {attempt.efficiencyPercentage !== undefined
+                    ? `${attempt.efficiencyPercentage.toFixed(2)}%`
+                    : "N/A"}
+                </td>
 
-                {/* Acción - Botón con icono de ojo */}
+                {/* Acción */}
                 <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
                   <button
-                    onClick={() => router.push(generateHref(attempt.id))} // 📌 URL dinámica
+                    onClick={() => router.push(generateHref(attempt.id))}
                     className="text-blue-600 hover:text-blue-800"
                     title="Ver intento"
                   >
@@ -51,7 +63,11 @@ const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({ quizId, attempts,
                       viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0 -6 0M2.458 12c1.837 -4.667 6.178 -8 11.542 -8s9.705 3.333 11.542 8c-1.837 4.667 -6.178 8 -11.542 8s-9.705 -3.333 -11.542 -8"></path>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0 -6 0M2.458 12c1.837 -4.667 6.178 -8 11.542 -8s9.705 3.333 11.542 8c-1.837 4.667 -6.178 8 -11.542 8s-9.705 -3.333 -11.542 -8"
+                      ></path>
                     </svg>
                   </button>
                 </td>

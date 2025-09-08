@@ -3,6 +3,7 @@ export interface QuizAttempt {
     grade: number;
     maxGrade: number;
     date: string;
+    efficiencyPercentage?: number;
   }
   
   export interface QuizSummary {

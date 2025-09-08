@@ -22,19 +22,31 @@ export class QuizSummaryMapper {
     };
   }
 
-  /**
-   * Convierte un intento individual en un objeto `QuizAttempt`, asegurando datos válidos.
-   * @param data Datos del intento obtenidos desde la API o un mock
-   * @returns `QuizAttempt`
-   */
-  private static mapToQuizAttempt(data: Partial<{ id: string; grade: string | number; maxGrade: string | number; date: string }>): QuizAttempt {
-    return {
-      id: data.id ?? "unknown_attempt",
-      grade: QuizSummaryMapper.parseNumber(data.grade, 0), // Convertir `grade` a número o 0
-      maxGrade: QuizSummaryMapper.parseNumber(data.maxGrade, 10), // Convertir `maxGrade` a número o 10
-      date: data.date ?? "unknown_date",
-    };
-  }
+ /**
+ * Convierte un intento individual en un objeto `QuizAttempt`, asegurando datos válidos.
+ * @param data Datos del intento obtenidos desde la API o un mock
+ * @returns `QuizAttempt`
+ */
+private static mapToQuizAttempt(
+  data: Partial<{
+    id: string;
+    grade: string | number;
+    maxGrade: string | number;
+    date: string;
+    efficiencyPercentage: string | number;
+  }>
+): QuizAttempt {
+  return {
+    id: data.id ?? "unknown_attempt",
+    grade: QuizSummaryMapper.parseNumber(data.grade, 0),
+    maxGrade: QuizSummaryMapper.parseNumber(data.maxGrade, 10),
+    date: data.date ?? "unknown_date",
+    efficiencyPercentage: data.efficiencyPercentage !== undefined
+      ? QuizSummaryMapper.parseNumber(data.efficiencyPercentage, 0)
+      : undefined,
+  };
+}
+
 
   /**
    * Convierte valores a número, manejando strings, números y valores nulos.
