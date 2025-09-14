@@ -4,7 +4,7 @@ import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 export const metadata: Metadata = {
   title: "Constructor | NikIT",
-  description: "Página para construir evaluaciones.",
+  description: "Página para construir quizzes.",
 };
 
 const ConstructorPage = () => {
