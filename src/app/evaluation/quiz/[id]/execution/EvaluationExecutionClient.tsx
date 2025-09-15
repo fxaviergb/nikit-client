@@ -29,12 +29,16 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
   quizId,
   isInteractive,
   isShuffled,
-  questionCount
+  questionCount,
 }) => {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
-  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
+  const [selectedAnswers, setSelectedAnswers] = useState<{
+    [key: string]: string;
+  }>({});
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(
+    new Set(),
+  );
   const [attemptId, setAttemptId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +56,10 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
 
     const loadQuestions = async () => {
       try {
-        const { questions, attemptId } = await fetchQuizQuestions(quizId, questionCount);
+        const { questions, attemptId } = await fetchQuizQuestions(
+          quizId,
+          questionCount,
+        );
         const processed = isShuffled
           ? questions.map((q) => ({
               ...q,
@@ -60,7 +67,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
             }))
           : questions;
 
-        setQuestions(processed);
+        setQuestions(processed as Question[]);
         setAttemptId(attemptId);
       } catch (err) {
         setError("Error cargando el cuestionario");
@@ -101,7 +108,9 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
 
     try {
       const result = await sendQuizAnswers(attemptId, payload);
-      router.push(`/evaluation/quiz/${result.quizId}/attempt/${result.attemptId}`);
+      router.push(
+        `/evaluation/quiz/${result.quizId}/attempt/${result.attemptId}`,
+      );
     } catch (error) {
       alert("Ocurrió un error al enviar las respuestas.");
     }
@@ -115,7 +124,7 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
   const getOptionClass = (
     question: Question,
     option: QuizOption,
-    selectedOptionId: string | undefined
+    selectedOptionId: string | undefined,
   ): string => {
     if (!isInteractive || !selectedOptionId) {
       return selectedOptionId === option.id
@@ -124,8 +133,10 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
     }
 
     if (answeredQuestions.has(question.id)) {
-      if (option.answer.isCorrect) return "bg-green-100 border-green-500 text-green-800";
-      if (option.id === selectedOptionId) return "bg-red-100 border-red-500 text-red-800";
+      if (option.answer.isCorrect)
+        return "bg-green-100 border-green-500 text-green-800";
+      if (option.id === selectedOptionId)
+        return "bg-red-100 border-red-500 text-red-800";
       return "border-gray-300 opacity-60";
     }
 
@@ -136,16 +147,20 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
 
   return (
     <div className="container mx-auto p-6">
-      <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-semibold text-gray-800">Ejecutando Evaluación</h1>
+      <div className="mb-6 rounded-lg bg-white p-6 shadow-lg">
+        <div className="mb-2 flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Ejecutando Evaluación
+          </h1>
           {isInteractive && (
-            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full border border-blue-300">
+            <span className="rounded-full border border-blue-300 bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
               🧠 Modo Interactivo
             </span>
           )}
         </div>
-        <p className="text-gray-600">Responde todas las preguntas antes de finalizar.</p>
+        <p className="text-gray-600">
+          Responde todas las preguntas antes de finalizar.
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -153,30 +168,40 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
           const selectedOptionId = selectedAnswers[question.id];
 
           return (
-            <div key={question.id} className="bg-white shadow-md rounded-lg p-4">
+            <div
+              key={question.id}
+              className="rounded-lg bg-white p-4 shadow-md"
+            >
               <h2 className="text-lg font-semibold text-gray-800">
                 {qIndex + 1}. {question.question}
               </h2>
               <div className="mt-2 space-y-2">
                 {question.options.map((option, oIndex) => {
-                  const isDisabled = isInteractive && answeredQuestions.has(question.id);
+                  const isDisabled =
+                    isInteractive && answeredQuestions.has(question.id);
                   return (
                     <label
                       key={option.id}
-                      className={`block p-2 border rounded-md cursor-pointer transition ${
-                        getOptionClass(question, option, selectedOptionId)
-                      } ${isDisabled ? "cursor-not-allowed" : ""}`}
+                      className={`block cursor-pointer rounded-md border p-2 transition ${getOptionClass(
+                        question,
+                        option,
+                        selectedOptionId,
+                      )} ${isDisabled ? "cursor-not-allowed" : ""}`}
                     >
                       <input
                         type="radio"
                         name={`question-${question.id}`}
                         value={option.id}
                         checked={selectedOptionId === option.id}
-                        onChange={() => handleAnswerSelect(question.id, option.id)}
+                        onChange={() =>
+                          handleAnswerSelect(question.id, option.id)
+                        }
                         disabled={isDisabled}
                         className="mr-2"
                       />
-                      <span className="font-semibold">{optionLabels[oIndex]}. </span>
+                      <span className="font-semibold">
+                        {optionLabels[oIndex]}.{" "}
+                      </span>
                       {option.option}
                     </label>
                   );
@@ -190,13 +215,13 @@ const EvaluationExecutionClient: React.FC<EvaluationExecutionClientProps> = ({
       <div className="mt-6 flex justify-between">
         <button
           onClick={() => router.back()}
-          className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          className="rounded-md bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
         >
           Volver
         </button>
         <button
           onClick={handleFinishQuiz}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          className="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
         >
           Finalizar
         </button>
