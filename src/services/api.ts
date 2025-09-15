@@ -4,7 +4,7 @@ import { GenericListMapper } from "@/utils/GenericListMapper";
 import { MockData } from "@/mocks/MockData"; // Importamos los datos mock
 import { QuizSummaryMapper } from "@/utils/QuizSummaryMapper";
 import { QuizSummary, QuizSummaryApiResponse } from "@/types/quiz-summary";
-import { EvaluationAnswerPayload, QuizApiResponse, QuizGradeResponse, QuizQuestion } from "@/types/quiz"; 
+import { EvaluationAnswerPayload, Quiz, QuizApiResponse, QuizGradeResponse, QuizQuestion } from "@/types/quiz"; 
 import { AttemptReviewResponse } from "@/types/attempt-review";
 import { Login } from "@/types/login";
 import { parseCookies, destroyCookie } from "nookies";
@@ -274,6 +274,32 @@ export const updateTopic = async (id: string, payload: { name: string; descripti
     return response.data;
   } catch (error) {
     console.error(`❌ Error al actualizar tema ${id}:`, error);
+    throw error;
+  }
+};
+
+// Función para obtener el detalle completo de un cuestionario
+export const fetchQuizById = async (quizId: string): Promise<Quiz> => {
+  try {
+    const response = await apiClient.get<Quiz>(`/api/v1/quiz/${quizId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al obtener detalle del quiz ${quizId}:`, error);
+    throw error;
+  }
+};
+
+// Función para actualizar un cuestionario
+export const updateQuiz = async (quizId: string, payload: any): Promise<Quiz> => {
+  try {
+    const response = await apiClient.put<Quiz>(`/api/v1/quiz/${quizId}`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al actualizar cuestionario ${quizId}:`, error);
     throw error;
   }
 };
