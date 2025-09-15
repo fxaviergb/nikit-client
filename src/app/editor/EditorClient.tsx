@@ -477,7 +477,8 @@ const EditorClient: React.FC = () => {
     openEditor("option", newO);
   };
 
-  const handleDeleteQuestion = (questionId: string) => {
+  const handleDeleteQuestion = (questionId: string | undefined | null) => {
+    if (!questionId) return; // no hace nada si no hay id
     setQuizData((prev) =>
       prev
         ? {
@@ -488,7 +489,11 @@ const EditorClient: React.FC = () => {
     );
   };
 
-  const handleDeleteOption = (questionId: string, optionId: string) => {
+  const handleDeleteOption = (
+    questionId: string | undefined | null,
+    optionId: string | undefined | null,
+  ) => {
+    if (!questionId || !optionId) return; // no hace nada si no hay id
     setQuizData((prev) =>
       prev
         ? {
