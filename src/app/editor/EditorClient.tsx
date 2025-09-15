@@ -208,7 +208,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </button>
 
             <button
-              onClick={onEdit}
+              onClick={() => onEdit(question)}
               className="text-sm text-blue-600 hover:underline"
             >
               ✏️ Editar
@@ -264,7 +264,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     option={opt}
                     index={oIndex}
                     onEdit={() => onEditOption(opt)}
-                    onDelete={() => onDeleteOption(opt.id)}
+                    onDelete={() => onDeleteOption(opt.id ?? "")}
                   />
                 ))}
               </div>
@@ -467,7 +467,7 @@ const EditorClient: React.FC = () => {
 
   const handleAddOption = (questionId?: string | null) => {
     if (!quizData) return;
-    const newO = createNewOption(questionId);
+    const newO = createNewOption(questionId ?? "");
     setQuizData({
       ...quizData,
       questions: quizData.questions.map((q) =>
