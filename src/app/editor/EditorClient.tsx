@@ -11,37 +11,13 @@ import {
 } from "@/services/api";
 import { GenericListItem } from "@/types/generic-list-item";
 import { Quiz, QuizQuestion, QuizOption } from "@/types/quiz";
-
-const MIN_QUESTIONS = 5;
-const MIN_OPTIONS = 2;
-const optionLabels = ["A", "B", "C", "D", "E", "F"];
+import { AuditUtils } from "@/utils/AuditUtils";
+import { QuizConstants } from "@/utils/QuizConstants";
+import { JsonUtils } from "@/utils/JsonUtils";
+import { QuizBuilderUtils } from "@/utils/QuizBuilderUtils";
 
 const CodeEditor = dynamic(() => import("@uiw/react-textarea-code-editor"), {
   ssr: false,
-});
-
-const baseAudit = () => ({
-  createdAt: new Date().toISOString(),
-  updatedAt: null,
-  createdBy: "system",
-  updatedBy: null,
-});
-
-const createNewQuestion = (quizId: string): QuizQuestion => ({
-  id: `front-uuid-${crypto.randomUUID()}`,
-  question: "Nueva pregunta",
-  questionVersion: 1,
-  quizId,
-  options: [],
-  audit: baseAudit(),
-});
-
-const createNewOption = (questionId: string | null): QuizOption => ({
-  id: `front-uuid-${crypto.randomUUID()}`,
-  questionId,
-  option: "Nueva opción",
-  answer: { isCorrect: false, justification: "", extras: [] },
-  audit: baseAudit(),
 });
 
 /* -------------------- SUBCOMPONENTES -------------------- */
@@ -69,7 +45,9 @@ const OptionItem: React.FC<OptionItemProps> = ({
       className={`flex items-center space-x-2 rounded-md border p-2 ${bgClass}`}
     >
       <span>{icon}</span>
-      <span className="font-semibold">{optionLabels[index]}.</span>
+      <span className="font-semibold">
+        {QuizConstants.optionLabels[index]}.
+      </span>
       <span>{option.option}</span>
       <button
         onClick={onEdit}
@@ -197,7 +175,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         audit:
                           question.options.find(
                             (opt) => opt.option === o.option,
-                          )?.audit || baseAudit(),
+                          )?.audit || AuditUtils.baseAudit(),
                       })),
                     };
                     onEdit(reconstructed);
@@ -433,23 +411,6 @@ const EditorClient: React.FC = () => {
     fetchQuizById(selectedQuiz).then(setQuizData);
   }, [selectedQuiz]);
 
-  const renderQuizJson = () =>
-    JSON.stringify(
-      {
-        name: quizData?.name,
-        description: quizData?.description,
-        questions: quizData?.questions.map((q) => ({
-          question: q.question,
-          options: q.options.map((o) => ({
-            option: o.option,
-            answer: o.answer,
-          })),
-        })),
-      },
-      null,
-      2,
-    );
-
   /* -------- Manejo de modal -------- */
   const openEditor = (
     type: "quiz" | "question" | "option",
@@ -472,14 +433,14 @@ const EditorClient: React.FC = () => {
   /* -------- Operaciones -------- */
   const handleAddQuestion = () => {
     if (!quizData) return;
-    const newQ = createNewQuestion(quizData.id);
+    const newQ = QuizBuilderUtils.createNewQuestion(quizData.id);
     setQuizData({ ...quizData, questions: [...quizData.questions, newQ] });
     openEditor("question", newQ);
   };
 
   const handleAddOption = (questionId?: string | null) => {
     if (!quizData) return;
-    const newO = createNewOption(questionId ?? "");
+    const newO = QuizBuilderUtils.createNewOption(questionId ?? "");
     setQuizData({
       ...quizData,
       questions: quizData.questions.map((q) =>
@@ -562,40 +523,11 @@ const EditorClient: React.FC = () => {
     closeModal();
   };
 
-  /* -------- Validación -------- */
-  const getValidationErrors = (): string[] => {
-    if (!quizData) return ["No hay cuestionario cargado"];
-    const errors: string[] = [];
-
-    if (!selectedTopic) errors.push("Debe seleccionar un tópico.");
-    if (!quizData.name?.trim()) errors.push("Debe ingresar un nombre.");
-    if (!quizData.description?.trim())
-      errors.push("Debe ingresar una descripción.");
-    if (quizData.questions.length < MIN_QUESTIONS)
-      errors.push(`Debe registrar al menos ${MIN_QUESTIONS} preguntas.`);
-
-    quizData.questions.forEach((q, i) => {
-      if (q.options.length < MIN_OPTIONS)
-        errors.push(
-          `La pregunta ${i + 1} debe tener al menos ${MIN_OPTIONS} opciones.`,
-        );
-
-      if (q.options.filter((opt) => opt.answer.isCorrect).length !== 1)
-        errors.push(
-          `La pregunta ${i + 1} debe tener exactamente UNA opción correcta.`,
-        );
-
-      if (q.options.some((opt) => !opt.option.trim()))
-        errors.push(
-          `Todas las opciones de la pregunta ${i + 1} deben tener texto.`,
-        );
-    });
-
-    return errors;
-  };
-
   const handleValidateQuiz = async () => {
-    const errors = getValidationErrors();
+    const errors = QuizBuilderUtils.getValidationErrors(
+      quizData,
+      selectedTopic,
+    );
     if (errors.length > 0) {
       alert("❌ Errores encontrados:\n\n" + errors.join("\n"));
       return false;
@@ -608,36 +540,13 @@ const EditorClient: React.FC = () => {
     if (!quizData) return;
     try {
       if (!(await handleValidateQuiz())) return;
-      const payload = cleanQuizForBackend(quizData);
+      const payload = QuizBuilderUtils.cleanQuizForBackend(quizData);
       const updatedQuiz = await updateQuiz(quizData.id, payload);
       setQuizData(updatedQuiz);
       alert("✅ Cambios guardados correctamente.");
     } catch (err: any) {
       alert("❌ Error al guardar: " + err.message);
     }
-  };
-
-  const cleanQuizForBackend = (quiz: Quiz) => {
-    const isFrontGeneratedId = (id: string | undefined) =>
-      !!id && id.startsWith("front-uuid-");
-    return {
-      id: quiz.id,
-      name: quiz.name,
-      description: quiz.description,
-      questions: quiz.questions.map((q) => ({
-        id: q.id && !isFrontGeneratedId(q.id) ? q.id : undefined,
-        question: q.question,
-        options: q.options.map((o) => ({
-          id: o.id && !isFrontGeneratedId(o.id) ? o.id : undefined,
-          option: o.option,
-          answer: {
-            isCorrect: o.answer.isCorrect,
-            justification: o.answer.justification,
-            extras: o.answer.extras?.filter((e) => !!e?.trim()) || [],
-          },
-        })),
-      })),
-    };
   };
 
   /* -------------------- RENDER -------------------- */
@@ -739,7 +648,7 @@ const EditorClient: React.FC = () => {
                               option: o.option,
                               answer: o.answer,
                             })),
-                            audit: baseAudit(),
+                            audit: AuditUtils.baseAudit(),
                           })),
                         }
                       : null,
@@ -750,7 +659,7 @@ const EditorClient: React.FC = () => {
                   setQuizJsonError(err.message);
                 }
               } else {
-                setQuizJsonText(renderQuizJson());
+                setQuizJsonText(JsonUtils.renderQuizJson(quizData));
                 setShowQuizJson(true);
               }
             }}
@@ -899,9 +808,9 @@ const EditorClient: React.FC = () => {
                           questionId: quizData?.id || "",
                           option: o.option,
                           answer: o.answer,
-                          audit: baseAudit(),
+                          audit: AuditUtils.baseAudit(),
                         })),
-                        audit: baseAudit(),
+                        audit: AuditUtils.baseAudit(),
                       }),
                     );
 
