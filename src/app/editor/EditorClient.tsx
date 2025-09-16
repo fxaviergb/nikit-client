@@ -98,6 +98,10 @@ interface QuestionCardProps {
   onDeleteLink: (i: number) => void;
   jsonEditActive: boolean;
   setJsonEditActive: (val: boolean) => void;
+  openEditor: (
+    type: "quiz" | "question" | "option",
+    data: Quiz | QuizQuestion | QuizOption,
+  ) => void;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -111,12 +115,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onDeleteLink,
   jsonEditActive,
   setJsonEditActive,
+  openEditor,
 }) => {
-  const renderJson = () =>
+  const renderJson = (q: QuizQuestion) =>
     JSON.stringify(
       {
-        question: question.question,
-        options: question.options.map((opt) => ({
+        question: q.question,
+        options: q.options.map((opt) => ({
           option: opt.option,
           answer: {
             isCorrect: opt.answer.isCorrect,
@@ -130,14 +135,21 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     );
 
   const [showJson, setShowJson] = useState(false);
-  const [jsonText, setJsonText] = useState(renderJson());
+  const [jsonText, setJsonText] = useState(renderJson(question));
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const [previousValidJsonText, setPreviousValidJsonText] =
-    useState(renderJson());
+  const [previousValidJsonText, setPreviousValidJsonText] = useState(
+    renderJson(question),
+  );
   const [originalQuestion] = useState<QuizQuestion>(
     JSON.parse(JSON.stringify(question)),
   );
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const updatedJson = renderJson(question);
+    setJsonText(updatedJson);
+    setPreviousValidJsonText(updatedJson);
+  }, [question]);
 
   const handleJsonChange = (text: string) => {
     setJsonText(text);
@@ -197,7 +209,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     setJsonError(err.message);
                   }
                 } else {
-                  setPreviousValidJsonText(renderJson());
+                  setPreviousValidJsonText(renderJson(question));
                   setShowJson(true);
                   setJsonEditActive(true);
                 }
@@ -208,7 +220,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </button>
 
             <button
-              onClick={() => onEdit(question)}
+              onClick={() => openEditor("question", question)}
               className="text-sm text-blue-600 hover:underline"
             >
               ✏️ Editar
@@ -815,6 +827,7 @@ const EditorClient: React.FC = () => {
                     onDeleteLink={handleDeleteLink}
                     jsonEditActive={jsonEditActive}
                     setJsonEditActive={setJsonEditActive}
+                    openEditor={openEditor} // ✅ Este es el que resuelve el error
                   />
                 ))}
 
@@ -911,6 +924,184 @@ const EditorClient: React.FC = () => {
                 className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
               >
                 Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editor */}
+      {modalType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="w-full max-w-lg rounded bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-bold">
+              {modalType === "question" ? "Editar Pregunta" : "Editar Opción"}
+            </h3>
+
+            {modalType === "quiz" && modalQuizData && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Nombre del Cuestionario
+                  </label>
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded border p-2"
+                    value={modalQuizData.name}
+                    onChange={(e) =>
+                      setModalQuizData((prev) =>
+                        prev ? { ...prev, name: e.target.value } : prev,
+                      )
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Descripción
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="mt-1 w-full rounded border p-2"
+                    value={modalQuizData.description}
+                    onChange={(e) =>
+                      setModalQuizData((prev) =>
+                        prev ? { ...prev, description: e.target.value } : prev,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            {modalType === "question" && modalQuestion && (
+              <div className="space-y-4">
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={3}
+                  value={modalQuestion.question}
+                  onChange={(e) =>
+                    setModalQuestion({
+                      ...modalQuestion,
+                      question: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {modalType === "option" && modalOption && (
+              <div className="space-y-4">
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={2}
+                  value={modalOption.option}
+                  onChange={(e) =>
+                    setModalOption({ ...modalOption, option: e.target.value })
+                  }
+                />
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={modalOption.answer.isCorrect}
+                    onChange={(e) =>
+                      setModalOption({
+                        ...modalOption,
+                        answer: {
+                          ...modalOption.answer,
+                          isCorrect: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <span>¿Es la opción correcta?</span>
+                </label>
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={2}
+                  placeholder="Justificación"
+                  value={modalOption.answer.justification}
+                  onChange={(e) =>
+                    setModalOption({
+                      ...modalOption,
+                      answer: {
+                        ...modalOption.answer,
+                        justification: e.target.value,
+                      },
+                    })
+                  }
+                />
+                <div>
+                  <label className="block text-sm font-semibold">
+                    Links de referencia
+                  </label>
+                  <ul className="mt-2 space-y-1">
+                    {modalOption.answer.extras?.map((link, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center justify-between text-sm text-blue-600"
+                      >
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {link}
+                        </a>
+                        <button
+                          onClick={() => handleDeleteLink(i)}
+                          className="ml-2 text-xs text-red-600"
+                        >
+                          🗑️
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Nuevo link"
+                      className="flex-1 rounded border p-1"
+                      value={newLink}
+                      onChange={(e) => setNewLink(e.target.value)}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newLink.trim()) {
+                          setModalOption({
+                            ...modalOption,
+                            answer: {
+                              ...modalOption.answer,
+                              extras: [
+                                ...(modalOption.answer.extras || []),
+                                newLink,
+                              ],
+                            },
+                          });
+                          setNewLink("");
+                        }
+                      }}
+                      className="rounded bg-green-600 px-3 py-1 text-sm text-white"
+                    >
+                      ➕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={closeModal}
+                className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Guardar
               </button>
             </div>
           </div>
