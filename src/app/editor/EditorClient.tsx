@@ -15,6 +15,7 @@ import { AuditUtils } from "@/utils/AuditUtils";
 import { QuizConstants } from "@/utils/QuizConstants";
 import { JsonUtils } from "@/utils/JsonUtils";
 import { QuizBuilderUtils } from "@/utils/QuizBuilderUtils";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const CodeEditor = dynamic(() => import("@uiw/react-textarea-code-editor"), {
   ssr: false,
@@ -369,6 +370,13 @@ const EditorClient: React.FC = () => {
   const [bulkQuestionsError, setBulkQuestionsError] = useState<string | null>(
     null,
   );
+  const [filtersVisible, setFiltersVisible] = useState(true);
+
+  useEffect(() => {
+    if (selectedQuiz) {
+      setFiltersVisible(false);
+    }
+  }, [selectedQuiz]);
 
   useEffect(() => {
     fetchKnowledges().then(setKnowledges);
@@ -553,120 +561,154 @@ const EditorClient: React.FC = () => {
   return (
     <div className="relative space-y-6 p-6">
       <a id="top" />
-      <h1 className="text-xl font-bold">Editor de Cuestionarios</h1>
 
-      {/* Selectores */}
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">
-            Área de Conocimiento
-          </label>
-          <select
-            className="w-full rounded border p-2"
-            value={selectedKnowledge ?? ""}
-            onChange={(e) => setSelectedKnowledge(e.target.value || null)}
-          >
-            <option value="">Seleccione un área</option>
-            {knowledges.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Encabezado del editor */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Editor de cuestionarios
+        </h1>
 
-        {topics.length > 0 && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">Tópico</label>
-            <select
-              className="w-full rounded border p-2"
-              value={selectedTopic ?? ""}
-              onChange={(e) => setSelectedTopic(e.target.value || null)}
+        {quizData && (
+          <div className="flex flex-wrap justify-start gap-2 md:justify-end md:gap-3">
+            <button
+              onClick={handleValidateQuiz}
+              className="rounded bg-yellow-500 px-3 py-2 text-sm text-white hover:bg-yellow-600 md:px-4"
             >
-              <option value="">Seleccione un tópico</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {quizzes.length > 0 && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Cuestionario
-            </label>
-            <select
-              className="w-full rounded border p-2"
-              value={selectedQuiz ?? ""}
-              onChange={(e) => setSelectedQuiz(e.target.value || null)}
+              Validar
+            </button>
+            <button
+              onClick={handleSaveQuiz}
+              className="rounded bg-blue-700 px-3 py-2 text-sm text-white hover:bg-blue-800 md:px-4"
             >
-              <option value="">Seleccione un cuestionario</option>
-              {quizzes.map((q) => (
-                <option key={q.id} value={q.id}>
-                  {q.name}
-                </option>
-              ))}
-            </select>
+              Guardar
+            </button>
+            <button
+              onClick={() => {
+                if (showQuizJson) {
+                  try {
+                    const parsed = JSON.parse(quizJsonText);
+                    setQuizData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            name: parsed.name,
+                            description: parsed.description,
+                            questions: parsed.questions.map((q: any) => ({
+                              id: q.id || `front-uuid-${crypto.randomUUID()}`,
+                              question: q.question,
+                              options: q.options.map((o: any) => ({
+                                id: o.id || `front-uuid-${crypto.randomUUID()}`,
+                                option: o.option,
+                                answer: o.answer,
+                              })),
+                              audit: AuditUtils.baseAudit(),
+                            })),
+                          }
+                        : null,
+                    );
+                    setShowQuizJson(false);
+                    setQuizJsonError(null);
+                  } catch (err: any) {
+                    setQuizJsonError(err.message);
+                  }
+                } else {
+                  setQuizJsonText(JsonUtils.renderQuizJson(quizData));
+                  setShowQuizJson(true);
+                }
+              }}
+              className="rounded bg-gray-300 px-3 py-2 text-sm text-white hover:bg-gray-400 md:px-4"
+            >
+              {showQuizJson ? "Vista normal" : "{ } JSON"}
+            </button>
           </div>
         )}
       </div>
 
-      {/* Botones */}
-      {quizData && (
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleValidateQuiz}
-            className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
-          >
-            Validar
-          </button>
-          <button
-            onClick={handleSaveQuiz}
-            className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-800"
-          >
-            Guardar
-          </button>
-          <button
-            onClick={() => {
-              if (showQuizJson) {
-                try {
-                  const parsed = JSON.parse(quizJsonText);
-                  setQuizData((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          name: parsed.name,
-                          description: parsed.description,
-                          questions: parsed.questions.map((q: any) => ({
-                            id: q.id || `front-uuid-${crypto.randomUUID()}`,
-                            question: q.question,
-                            options: q.options.map((o: any) => ({
-                              id: o.id || `front-uuid-${crypto.randomUUID()}`,
-                              option: o.option,
-                              answer: o.answer,
-                            })),
-                            audit: AuditUtils.baseAudit(),
-                          })),
-                        }
-                      : null,
-                  );
-                  setShowQuizJson(false);
-                  setQuizJsonError(null);
-                } catch (err: any) {
-                  setQuizJsonError(err.message);
-                }
-              } else {
-                setQuizJsonText(JsonUtils.renderQuizJson(quizData));
-                setShowQuizJson(true);
-              }
-            }}
-            className="rounded bg-gray-400 px-4 py-2 text-white hover:bg-gray-600"
-          >
-            {showQuizJson ? "Vista normal" : "{ } JSON"}
-          </button>
+      {/* Toggle Filtros */}
+      <div className="mb-2">
+        <button
+          onClick={() => setFiltersVisible((prev) => !prev)}
+          className="flex items-center text-sm text-blue-600 hover:underline"
+        >
+          {filtersVisible ? (
+            <>
+              <ChevronUp className="mr-1 h-4 w-4" />
+              Ocultar filtros
+            </>
+          ) : (
+            <>
+              <ChevronDown className="mr-1 h-4 w-4" />
+              Mostrar filtros
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Contenedor filtros */}
+      {filtersVisible && (
+        <div className="mb-6 rounded-lg bg-gray-50 p-4 shadow-sm ring-1 ring-gray-200 transition-all duration-300 ease-in-out">
+          <div className="space-y-4">
+            {/* Área de conocimiento */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Área de Conocimiento
+              </label>
+              <select
+                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                value={selectedKnowledge ?? ""}
+                onChange={(e) => setSelectedKnowledge(e.target.value || null)}
+              >
+                <option value="">Seleccione un área</option>
+                {knowledges.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tópico */}
+            {topics.length > 0 && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Tópico
+                </label>
+                <select
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  value={selectedTopic ?? ""}
+                  onChange={(e) => setSelectedTopic(e.target.value || null)}
+                >
+                  <option value="">Seleccione un tópico</option>
+                  {topics.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Cuestionario */}
+            {quizzes.length > 0 && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Cuestionario
+                </label>
+                <select
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  value={selectedQuiz ?? ""}
+                  onChange={(e) => setSelectedQuiz(e.target.value || null)}
+                >
+                  <option value="">Seleccione un cuestionario</option>
+                  {quizzes.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1051,10 +1093,10 @@ const EditorClient: React.FC = () => {
       {/* Botón flotante regresar al inicio */}
       <a
         href="#top"
-        className="fixed bottom-4 right-4 z-50 rounded-full bg-blue-600 px-4 py-3 text-white shadow-lg hover:bg-blue-700"
+        className="fixed bottom-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white text-blue-600 shadow-md ring-1 ring-gray-300 transition hover:bg-blue-600 hover:text-white"
         title="Volver al inicio"
       >
-        ⬆️
+        <span className="text-xl">↑</span>
       </a>
     </div>
   );

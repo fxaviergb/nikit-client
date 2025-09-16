@@ -6,6 +6,7 @@ export interface ReviewOption {
     isCorrect: boolean;
     feedback: string;
     points: string;
+    extras: string[];
   };
 }
 
@@ -17,6 +18,7 @@ export interface ReviewQuestion {
     status: string;
     feedback: string;
     points: string;
+    extras: string[];
   };
 }
 
