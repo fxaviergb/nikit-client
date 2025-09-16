@@ -11,37 +11,14 @@ import {
 } from "@/services/api";
 import { GenericListItem } from "@/types/generic-list-item";
 import { Quiz, QuizQuestion, QuizOption } from "@/types/quiz";
-
-const MIN_QUESTIONS = 5;
-const MIN_OPTIONS = 2;
-const optionLabels = ["A", "B", "C", "D", "E", "F"];
+import { AuditUtils } from "@/utils/AuditUtils";
+import { QuizConstants } from "@/utils/QuizConstants";
+import { JsonUtils } from "@/utils/JsonUtils";
+import { QuizBuilderUtils } from "@/utils/QuizBuilderUtils";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const CodeEditor = dynamic(() => import("@uiw/react-textarea-code-editor"), {
   ssr: false,
-});
-
-const baseAudit = () => ({
-  createdAt: new Date().toISOString(),
-  updatedAt: null,
-  createdBy: "system",
-  updatedBy: null,
-});
-
-const createNewQuestion = (quizId: string): QuizQuestion => ({
-  id: `front-uuid-${crypto.randomUUID()}`,
-  question: "Nueva pregunta",
-  questionVersion: 1,
-  quizId,
-  options: [],
-  audit: baseAudit(),
-});
-
-const createNewOption = (questionId: string | null): QuizOption => ({
-  id: `front-uuid-${crypto.randomUUID()}`,
-  questionId,
-  option: "Nueva opción",
-  answer: { isCorrect: false, justification: "", extras: [] },
-  audit: baseAudit(),
 });
 
 /* -------------------- SUBCOMPONENTES -------------------- */
@@ -69,7 +46,9 @@ const OptionItem: React.FC<OptionItemProps> = ({
       className={`flex items-center space-x-2 rounded-md border p-2 ${bgClass}`}
     >
       <span>{icon}</span>
-      <span className="font-semibold">{optionLabels[index]}.</span>
+      <span className="font-semibold">
+        {QuizConstants.optionLabels[index]}.
+      </span>
       <span>{option.option}</span>
       <button
         onClick={onEdit}
@@ -98,6 +77,10 @@ interface QuestionCardProps {
   onDeleteLink: (i: number) => void;
   jsonEditActive: boolean;
   setJsonEditActive: (val: boolean) => void;
+  openEditor: (
+    type: "quiz" | "question" | "option",
+    data: Quiz | QuizQuestion | QuizOption,
+  ) => void;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
@@ -111,12 +94,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onDeleteLink,
   jsonEditActive,
   setJsonEditActive,
+  openEditor,
 }) => {
-  const renderJson = () =>
+  const renderJson = (q: QuizQuestion) =>
     JSON.stringify(
       {
-        question: question.question,
-        options: question.options.map((opt) => ({
+        question: q.question,
+        options: q.options.map((opt) => ({
           option: opt.option,
           answer: {
             isCorrect: opt.answer.isCorrect,
@@ -130,14 +114,21 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     );
 
   const [showJson, setShowJson] = useState(false);
-  const [jsonText, setJsonText] = useState(renderJson());
+  const [jsonText, setJsonText] = useState(renderJson(question));
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const [previousValidJsonText, setPreviousValidJsonText] =
-    useState(renderJson());
+  const [previousValidJsonText, setPreviousValidJsonText] = useState(
+    renderJson(question),
+  );
   const [originalQuestion] = useState<QuizQuestion>(
     JSON.parse(JSON.stringify(question)),
   );
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const updatedJson = renderJson(question);
+    setJsonText(updatedJson);
+    setPreviousValidJsonText(updatedJson);
+  }, [question]);
 
   const handleJsonChange = (text: string) => {
     setJsonText(text);
@@ -185,7 +176,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         audit:
                           question.options.find(
                             (opt) => opt.option === o.option,
-                          )?.audit || baseAudit(),
+                          )?.audit || AuditUtils.baseAudit(),
                       })),
                     };
                     onEdit(reconstructed);
@@ -197,7 +188,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     setJsonError(err.message);
                   }
                 } else {
-                  setPreviousValidJsonText(renderJson());
+                  setPreviousValidJsonText(renderJson(question));
                   setShowJson(true);
                   setJsonEditActive(true);
                 }
@@ -208,7 +199,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </button>
 
             <button
-              onClick={() => onEdit(question)}
+              onClick={() => openEditor("question", question)}
               className="text-sm text-blue-600 hover:underline"
             >
               ✏️ Editar
@@ -379,6 +370,13 @@ const EditorClient: React.FC = () => {
   const [bulkQuestionsError, setBulkQuestionsError] = useState<string | null>(
     null,
   );
+  const [filtersVisible, setFiltersVisible] = useState(true);
+
+  useEffect(() => {
+    if (selectedQuiz) {
+      setFiltersVisible(false);
+    }
+  }, [selectedQuiz]);
 
   useEffect(() => {
     fetchKnowledges().then(setKnowledges);
@@ -421,23 +419,6 @@ const EditorClient: React.FC = () => {
     fetchQuizById(selectedQuiz).then(setQuizData);
   }, [selectedQuiz]);
 
-  const renderQuizJson = () =>
-    JSON.stringify(
-      {
-        name: quizData?.name,
-        description: quizData?.description,
-        questions: quizData?.questions.map((q) => ({
-          question: q.question,
-          options: q.options.map((o) => ({
-            option: o.option,
-            answer: o.answer,
-          })),
-        })),
-      },
-      null,
-      2,
-    );
-
   /* -------- Manejo de modal -------- */
   const openEditor = (
     type: "quiz" | "question" | "option",
@@ -460,14 +441,14 @@ const EditorClient: React.FC = () => {
   /* -------- Operaciones -------- */
   const handleAddQuestion = () => {
     if (!quizData) return;
-    const newQ = createNewQuestion(quizData.id);
+    const newQ = QuizBuilderUtils.createNewQuestion(quizData.id);
     setQuizData({ ...quizData, questions: [...quizData.questions, newQ] });
     openEditor("question", newQ);
   };
 
   const handleAddOption = (questionId?: string | null) => {
     if (!quizData) return;
-    const newO = createNewOption(questionId ?? "");
+    const newO = QuizBuilderUtils.createNewOption(questionId ?? "");
     setQuizData({
       ...quizData,
       questions: quizData.questions.map((q) =>
@@ -550,40 +531,11 @@ const EditorClient: React.FC = () => {
     closeModal();
   };
 
-  /* -------- Validación -------- */
-  const getValidationErrors = (): string[] => {
-    if (!quizData) return ["No hay cuestionario cargado"];
-    const errors: string[] = [];
-
-    if (!selectedTopic) errors.push("Debe seleccionar un tópico.");
-    if (!quizData.name?.trim()) errors.push("Debe ingresar un nombre.");
-    if (!quizData.description?.trim())
-      errors.push("Debe ingresar una descripción.");
-    if (quizData.questions.length < MIN_QUESTIONS)
-      errors.push(`Debe registrar al menos ${MIN_QUESTIONS} preguntas.`);
-
-    quizData.questions.forEach((q, i) => {
-      if (q.options.length < MIN_OPTIONS)
-        errors.push(
-          `La pregunta ${i + 1} debe tener al menos ${MIN_OPTIONS} opciones.`,
-        );
-
-      if (q.options.filter((opt) => opt.answer.isCorrect).length !== 1)
-        errors.push(
-          `La pregunta ${i + 1} debe tener exactamente UNA opción correcta.`,
-        );
-
-      if (q.options.some((opt) => !opt.option.trim()))
-        errors.push(
-          `Todas las opciones de la pregunta ${i + 1} deben tener texto.`,
-        );
-    });
-
-    return errors;
-  };
-
   const handleValidateQuiz = async () => {
-    const errors = getValidationErrors();
+    const errors = QuizBuilderUtils.getValidationErrors(
+      quizData,
+      selectedTopic,
+    );
     if (errors.length > 0) {
       alert("❌ Errores encontrados:\n\n" + errors.join("\n"));
       return false;
@@ -596,7 +548,7 @@ const EditorClient: React.FC = () => {
     if (!quizData) return;
     try {
       if (!(await handleValidateQuiz())) return;
-      const payload = cleanQuizForBackend(quizData);
+      const payload = QuizBuilderUtils.cleanQuizForBackend(quizData);
       const updatedQuiz = await updateQuiz(quizData.id, payload);
       setQuizData(updatedQuiz);
       alert("✅ Cambios guardados correctamente.");
@@ -605,147 +557,158 @@ const EditorClient: React.FC = () => {
     }
   };
 
-  const cleanQuizForBackend = (quiz: Quiz) => {
-    const isFrontGeneratedId = (id: string | undefined) =>
-      !!id && id.startsWith("front-uuid-");
-    return {
-      id: quiz.id,
-      name: quiz.name,
-      description: quiz.description,
-      questions: quiz.questions.map((q) => ({
-        id: q.id && !isFrontGeneratedId(q.id) ? q.id : undefined,
-        question: q.question,
-        options: q.options.map((o) => ({
-          id: o.id && !isFrontGeneratedId(o.id) ? o.id : undefined,
-          option: o.option,
-          answer: {
-            isCorrect: o.answer.isCorrect,
-            justification: o.answer.justification,
-            extras: o.answer.extras?.filter((e) => !!e?.trim()) || [],
-          },
-        })),
-      })),
-    };
-  };
-
   /* -------------------- RENDER -------------------- */
   return (
     <div className="relative space-y-6 p-6">
       <a id="top" />
-      <h1 className="text-xl font-bold">Editor de Cuestionarios</h1>
 
-      {/* Selectores */}
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">
-            Área de Conocimiento
-          </label>
-          <select
-            className="w-full rounded border p-2"
-            value={selectedKnowledge ?? ""}
-            onChange={(e) => setSelectedKnowledge(e.target.value || null)}
-          >
-            <option value="">Seleccione un área</option>
-            {knowledges.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Encabezado del editor */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">
+          Editor de cuestionarios
+        </h1>
 
-        {topics.length > 0 && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">Tópico</label>
-            <select
-              className="w-full rounded border p-2"
-              value={selectedTopic ?? ""}
-              onChange={(e) => setSelectedTopic(e.target.value || null)}
+        {quizData && (
+          <div className="flex flex-wrap justify-start gap-2 md:justify-end md:gap-3">
+            <button
+              onClick={handleValidateQuiz}
+              className="rounded bg-yellow-500 px-3 py-2 text-sm text-white hover:bg-yellow-600 md:px-4"
             >
-              <option value="">Seleccione un tópico</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {quizzes.length > 0 && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Cuestionario
-            </label>
-            <select
-              className="w-full rounded border p-2"
-              value={selectedQuiz ?? ""}
-              onChange={(e) => setSelectedQuiz(e.target.value || null)}
+              Validar
+            </button>
+            <button
+              onClick={handleSaveQuiz}
+              className="rounded bg-blue-700 px-3 py-2 text-sm text-white hover:bg-blue-800 md:px-4"
             >
-              <option value="">Seleccione un cuestionario</option>
-              {quizzes.map((q) => (
-                <option key={q.id} value={q.id}>
-                  {q.name}
-                </option>
-              ))}
-            </select>
+              Guardar
+            </button>
+            <button
+              onClick={() => {
+                if (showQuizJson) {
+                  try {
+                    const parsed = JSON.parse(quizJsonText);
+                    setQuizData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            name: parsed.name,
+                            description: parsed.description,
+                            questions: parsed.questions.map((q: any) => ({
+                              id: q.id || `front-uuid-${crypto.randomUUID()}`,
+                              question: q.question,
+                              options: q.options.map((o: any) => ({
+                                id: o.id || `front-uuid-${crypto.randomUUID()}`,
+                                option: o.option,
+                                answer: o.answer,
+                              })),
+                              audit: AuditUtils.baseAudit(),
+                            })),
+                          }
+                        : null,
+                    );
+                    setShowQuizJson(false);
+                    setQuizJsonError(null);
+                  } catch (err: any) {
+                    setQuizJsonError(err.message);
+                  }
+                } else {
+                  setQuizJsonText(JsonUtils.renderQuizJson(quizData));
+                  setShowQuizJson(true);
+                }
+              }}
+              className="rounded bg-gray-300 px-3 py-2 text-sm text-white hover:bg-gray-400 md:px-4"
+            >
+              {showQuizJson ? "Vista normal" : "{ } JSON"}
+            </button>
           </div>
         )}
       </div>
 
-      {/* Botones */}
-      {quizData && (
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={handleValidateQuiz}
-            className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
-          >
-            Validar
-          </button>
-          <button
-            onClick={handleSaveQuiz}
-            className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-800"
-          >
-            Guardar
-          </button>
-          <button
-            onClick={() => {
-              if (showQuizJson) {
-                try {
-                  const parsed = JSON.parse(quizJsonText);
-                  setQuizData((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          name: parsed.name,
-                          description: parsed.description,
-                          questions: parsed.questions.map((q: any) => ({
-                            id: q.id || `front-uuid-${crypto.randomUUID()}`,
-                            question: q.question,
-                            options: q.options.map((o: any) => ({
-                              id: o.id || `front-uuid-${crypto.randomUUID()}`,
-                              option: o.option,
-                              answer: o.answer,
-                            })),
-                            audit: baseAudit(),
-                          })),
-                        }
-                      : null,
-                  );
-                  setShowQuizJson(false);
-                  setQuizJsonError(null);
-                } catch (err: any) {
-                  setQuizJsonError(err.message);
-                }
-              } else {
-                setQuizJsonText(renderQuizJson());
-                setShowQuizJson(true);
-              }
-            }}
-            className="rounded bg-gray-400 px-4 py-2 text-white hover:bg-gray-600"
-          >
-            {showQuizJson ? "Vista normal" : "{ } JSON"}
-          </button>
+      {/* Toggle Filtros */}
+      <div className="mb-2">
+        <button
+          onClick={() => setFiltersVisible((prev) => !prev)}
+          className="flex items-center text-sm text-blue-600 hover:underline"
+        >
+          {filtersVisible ? (
+            <>
+              <ChevronUp className="mr-1 h-4 w-4" />
+              Ocultar filtros
+            </>
+          ) : (
+            <>
+              <ChevronDown className="mr-1 h-4 w-4" />
+              Mostrar filtros
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Contenedor filtros */}
+      {filtersVisible && (
+        <div className="mb-6 rounded-lg bg-gray-50 p-4 shadow-sm ring-1 ring-gray-200 transition-all duration-300 ease-in-out">
+          <div className="space-y-4">
+            {/* Área de conocimiento */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Área de Conocimiento
+              </label>
+              <select
+                className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                value={selectedKnowledge ?? ""}
+                onChange={(e) => setSelectedKnowledge(e.target.value || null)}
+              >
+                <option value="">Seleccione un área</option>
+                {knowledges.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tópico */}
+            {topics.length > 0 && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Tópico
+                </label>
+                <select
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  value={selectedTopic ?? ""}
+                  onChange={(e) => setSelectedTopic(e.target.value || null)}
+                >
+                  <option value="">Seleccione un tópico</option>
+                  {topics.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Cuestionario */}
+            {quizzes.length > 0 && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Cuestionario
+                </label>
+                <select
+                  className="w-full rounded border border-gray-300 bg-white p-2 text-sm"
+                  value={selectedQuiz ?? ""}
+                  onChange={(e) => setSelectedQuiz(e.target.value || null)}
+                >
+                  <option value="">Seleccione un cuestionario</option>
+                  {quizzes.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -815,6 +778,7 @@ const EditorClient: React.FC = () => {
                     onDeleteLink={handleDeleteLink}
                     jsonEditActive={jsonEditActive}
                     setJsonEditActive={setJsonEditActive}
+                    openEditor={openEditor} // ✅ Este es el que resuelve el error
                   />
                 ))}
 
@@ -886,9 +850,9 @@ const EditorClient: React.FC = () => {
                           questionId: quizData?.id || "",
                           option: o.option,
                           answer: o.answer,
-                          audit: baseAudit(),
+                          audit: AuditUtils.baseAudit(),
                         })),
-                        audit: baseAudit(),
+                        audit: AuditUtils.baseAudit(),
                       }),
                     );
 
@@ -911,6 +875,184 @@ const EditorClient: React.FC = () => {
                 className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
               >
                 Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editor */}
+      {modalType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="w-full max-w-lg rounded bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-bold">
+              {modalType === "question" ? "Editar Pregunta" : "Editar Opción"}
+            </h3>
+
+            {modalType === "quiz" && modalQuizData && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Nombre del Cuestionario
+                  </label>
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded border p-2"
+                    value={modalQuizData.name}
+                    onChange={(e) =>
+                      setModalQuizData((prev) =>
+                        prev ? { ...prev, name: e.target.value } : prev,
+                      )
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Descripción
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="mt-1 w-full rounded border p-2"
+                    value={modalQuizData.description}
+                    onChange={(e) =>
+                      setModalQuizData((prev) =>
+                        prev ? { ...prev, description: e.target.value } : prev,
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            {modalType === "question" && modalQuestion && (
+              <div className="space-y-4">
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={3}
+                  value={modalQuestion.question}
+                  onChange={(e) =>
+                    setModalQuestion({
+                      ...modalQuestion,
+                      question: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            )}
+
+            {modalType === "option" && modalOption && (
+              <div className="space-y-4">
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={2}
+                  value={modalOption.option}
+                  onChange={(e) =>
+                    setModalOption({ ...modalOption, option: e.target.value })
+                  }
+                />
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={modalOption.answer.isCorrect}
+                    onChange={(e) =>
+                      setModalOption({
+                        ...modalOption,
+                        answer: {
+                          ...modalOption.answer,
+                          isCorrect: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <span>¿Es la opción correcta?</span>
+                </label>
+                <textarea
+                  className="w-full rounded border p-2"
+                  rows={2}
+                  placeholder="Justificación"
+                  value={modalOption.answer.justification}
+                  onChange={(e) =>
+                    setModalOption({
+                      ...modalOption,
+                      answer: {
+                        ...modalOption.answer,
+                        justification: e.target.value,
+                      },
+                    })
+                  }
+                />
+                <div>
+                  <label className="block text-sm font-semibold">
+                    Links de referencia
+                  </label>
+                  <ul className="mt-2 space-y-1">
+                    {modalOption.answer.extras?.map((link, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center justify-between text-sm text-blue-600"
+                      >
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {link}
+                        </a>
+                        <button
+                          onClick={() => handleDeleteLink(i)}
+                          className="ml-2 text-xs text-red-600"
+                        >
+                          🗑️
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-2 flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Nuevo link"
+                      className="flex-1 rounded border p-1"
+                      value={newLink}
+                      onChange={(e) => setNewLink(e.target.value)}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newLink.trim()) {
+                          setModalOption({
+                            ...modalOption,
+                            answer: {
+                              ...modalOption.answer,
+                              extras: [
+                                ...(modalOption.answer.extras || []),
+                                newLink,
+                              ],
+                            },
+                          });
+                          setNewLink("");
+                        }
+                      }}
+                      className="rounded bg-green-600 px-3 py-1 text-sm text-white"
+                    >
+                      ➕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={closeModal}
+                className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSave}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Guardar
               </button>
             </div>
           </div>
@@ -951,10 +1093,10 @@ const EditorClient: React.FC = () => {
       {/* Botón flotante regresar al inicio */}
       <a
         href="#top"
-        className="fixed bottom-4 right-4 z-50 rounded-full bg-blue-600 px-4 py-3 text-white shadow-lg hover:bg-blue-700"
+        className="fixed bottom-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white text-blue-600 shadow-md ring-1 ring-gray-300 transition hover:bg-blue-600 hover:text-white"
         title="Volver al inicio"
       >
-        ⬆️
+        <span className="text-xl">↑</span>
       </a>
     </div>
   );

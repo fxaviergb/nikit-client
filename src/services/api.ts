@@ -218,6 +218,7 @@ export const fetchAttemptReview = async (
     const response = await apiClient.get<AttemptReviewResponse>(
       `/api/v1/evaluation/attempt/${attemptId}`
     );
+    console.log(`Revisión del intento ${attemptId}:`, response.data);
     return response.data;
   } catch (error) {
     console.error(`❌ Error al obtener la revisión del intento ${attemptId}:`, error);
