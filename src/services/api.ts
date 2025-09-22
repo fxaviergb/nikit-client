@@ -8,6 +8,7 @@ import { EvaluationAnswerPayload, Quiz, QuizApiResponse, QuizGradeResponse, Quiz
 import { AttemptReviewResponse } from "@/types/attempt-review";
 import { Login } from "@/types/login";
 import { parseCookies, destroyCookie } from "nookies";
+import { AttemptSummary } from "@/types/attempt-summary";
 
 
 // Leer variable de entorno
@@ -332,5 +333,33 @@ export const updateQuiz = async (quizId: string, payload: any): Promise<Quiz> =>
   } catch (error) {
     console.error(`❌ Error al actualizar cuestionario ${quizId}:`, error);
     throw error;
+  }
+};
+
+// Función para obtener intentos por Knowledge, topics o quizzes
+export const fetchAttemptsSummary = async (
+  knowledges: string[] | null | undefined,
+  topics: string[] | null | undefined,
+  quizzes: string[] | null | undefined
+): Promise<AttemptSummary | null> => {
+  try {
+    const payload = {
+      queryType: "MIXED",
+      source: {
+        knowledges: knowledges && knowledges.length > 0 ? knowledges : [],
+        topics: topics && topics.length > 0 ? topics : [],
+        quizzes: quizzes && quizzes.length > 0 ? quizzes : [],
+      },
+    };
+
+    const response = await apiClient.post<AttemptSummary>(
+      "/api/v1/evaluation/attempt/search/summary",
+      payload
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al obtener intentos:", error);
+    return null;
   }
 };

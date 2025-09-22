@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GenericListCard from "@/components/List/GenericListCard";
-import { fetchQuizzesByTopic } from "@/services/api";
+import { fetchQuizzesByTopic, fetchAttemptsSummary } from "@/services/api";
 import { GenericListItem } from "@/types/generic-list-item";
+import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
+import { AttemptSummary } from "@/types/attempt-summary";
 
 interface QuizzesClient {
   topicId: string;
@@ -14,6 +16,13 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [showAttempts, setShowAttempts] = useState(false);
+  const [attemptsSummary, setAttemptsSummary] = useState<AttemptSummary | null>(
+    null,
+  );
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -53,6 +62,16 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
     );
   };
 
+  const handleToggleAttempts = async () => {
+    if (!showAttempts) {
+      setLoadingAttempts(true);
+      const summary = await fetchAttemptsSummary(null, [topicId], null);
+      setAttemptsSummary(summary);
+      setLoadingAttempts(false);
+    }
+    setShowAttempts(!showAttempts);
+  };
+
   return (
     <>
       {loading && <p>Cargando cuestionarios...</p>}
@@ -66,23 +85,48 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
             generateHref={(id) => `/evaluation/quiz/${id}/summary`}
           />
 
-          {/* ✅ Botones juntos, pegados con gap */}
-          <div className="flex justify-end gap-3 px-4 pb-2 pt-6">
+          {/* ✅ Botones en columna en móviles y fila en escritorio */}
+          <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
             {listData.length > 1 && (
               <button
                 onClick={handleMixedEvaluation}
-                className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+                className="min-h-[3rem] w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
               >
                 Evaluación aleatoria
               </button>
             )}
             <button
+              onClick={handleToggleAttempts}
+              className="min-h-[3rem] w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
+            >
+              {showAttempts ? "Ocultar intentos" : "Ver intentos"}
+            </button>
+            <button
               onClick={handleCreateQuiz}
-              className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+              className="min-h-[3rem] w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
             >
               Crear un cuestionario
             </button>
           </div>
+
+          {/* Sección de intentos */}
+          {showAttempts && (
+            <div className="mt-6 rounded-lg bg-white p-6 shadow">
+              {loadingAttempts ? (
+                <p className="text-gray-500">Cargando intentos...</p>
+              ) : attemptsSummary && attemptsSummary.attempts.length > 0 ? (
+                <QuizAttemptsSection
+                  quizId={topicId}
+                  attempts={attemptsSummary.attempts}
+                  title={`Dominio de la sección: ${attemptsSummary.efficiencyPercentage?.toFixed(2) ?? 0}%`}
+                />
+              ) : (
+                <p className="text-gray-600">
+                  No se han registrado intentos en este tema.
+                </p>
+              )}
+            </div>
+          )}
         </>
       )}
 

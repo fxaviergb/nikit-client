@@ -68,34 +68,39 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({
   };
 
   const handleOk = () => {
-    if (reviewData?.quizType === "MIXED") {
-      if (reviewData.requestSource.knowledges.length > 1) {
-        router.push(`/learn`);
-        return;
+    try {
+      if (reviewData?.quizType === "MIXED" && reviewData?.requestSource) {
+        if (reviewData.requestSource.knowledges?.length > 1) {
+          router.push(`/learn`);
+          return;
+        }
+
+        if (reviewData.requestSource.knowledges?.length === 1) {
+          const knowledgeId = reviewData.requestSource.knowledges[0];
+          router.push(`/learn/${knowledgeId}/topics`);
+          return;
+        }
+
+        if (reviewData.requestSource.topics?.length === 1) {
+          const topicId = reviewData.requestSource.topics[0];
+          const knowledgeId = "0";
+          router.push(`/learn/${knowledgeId}/topics/${topicId}/quizzes`);
+          return;
+        }
+
+        if (reviewData.requestSource.quizzes?.length === 1) {
+          const quizId = reviewData.requestSource.quizzes[0];
+          router.push(`/evaluation/quiz/${quizId}/summary`);
+          return;
+        }
       }
 
-      if (reviewData.requestSource.knowledges.length === 1) {
-        const knowledgeId = reviewData.requestSource.knowledges[0];
-        router.push(`/learn/${knowledgeId}/topics`);
-        return;
-      }
-
-      if (reviewData.requestSource.topics.length === 1) {
-        const topicId = reviewData.requestSource.topics[0];
-        const knowledgeId = "0";
-        router.push(`/learn/${knowledgeId}/topics/${topicId}/quizzes`);
-        return;
-      }
-
-      if (reviewData.requestSource.quizzes.length === 1) {
-        const quizId = reviewData.requestSource.quizzes[0];
-        router.push(`/evaluation/quiz/${quizId}/summary`);
-        return;
-      }
+      // Default redirect a resumen del quiz
+      router.push(`/evaluation/quiz/${quizId}/summary`);
+    } catch (error) {
+      console.error("Error en handleOk, usando fallback Volver:", error);
+      router.back();
     }
-
-    // Default redirect to quiz summary
-    router.push(`/evaluation/quiz/${quizId}/summary`);
   };
 
   if (loading)
@@ -303,8 +308,14 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({
         })}
       </div>
 
-      {/* Botón "Ok" */}
-      <div className="mt-8 flex justify-end">
+      {/* Botones al final */}
+      <div className="mt-8 flex justify-end gap-3">
+        <button
+          onClick={() => router.back()}
+          className="rounded-md bg-gray-500 px-6 py-2 text-white hover:bg-gray-600"
+        >
+          Volver
+        </button>
         <button
           onClick={handleOk}
           className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"

@@ -8,18 +8,28 @@ import {
   fetchKnowledges,
   createKnowledge,
   updateKnowledge,
+  fetchAttemptsSummary,
 } from "@/services/api";
+import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
+import { AttemptSummary } from "@/types/attempt-summary";
 
 const LearnClient: React.FC = () => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+
+  // Sección de intentos
+  const [showAttempts, setShowAttempts] = useState(false);
+  const [attemptsSummary, setAttemptsSummary] = useState<AttemptSummary | null>(
+    null,
+  );
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
 
   const router = useRouter();
 
@@ -94,6 +104,20 @@ const LearnClient: React.FC = () => {
     );
   };
 
+  const handleToggleAttempts = async () => {
+    if (!showAttempts) {
+      setLoadingAttempts(true);
+      const summary = await fetchAttemptsSummary(
+        listData.map((item) => item.id),
+        null,
+        null,
+      );
+      setAttemptsSummary(summary);
+      setLoadingAttempts(false);
+    }
+    setShowAttempts(!showAttempts);
+  };
+
   if (loading) return <p>Cargando grupos...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -109,24 +133,50 @@ const LearnClient: React.FC = () => {
         />
       )}
 
-      <div className="flex justify-end gap-4 px-4 pb-2 pt-6">
-        {/* ✅ Botón verde, siempre visible si hay al menos un knowledge */}
+      {/* ✅ Botones: columna en móvil, fila en escritorio */}
+      <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
         {listData.length > 0 && (
           <button
             onClick={handleMixedEvaluation}
-            className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+            className="w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
           >
             Evaluación aleatoria
           </button>
         )}
         <button
-          className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          onClick={handleToggleAttempts}
+          className="w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
+        >
+          {showAttempts ? "Ocultar intentos" : "Ver intentos"}
+        </button>
+        <button
+          className="w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
           onClick={() => setShowModal(true)}
         >
           Agregar
         </button>
       </div>
 
+      {/* Sección elegante de intentos */}
+      {showAttempts && (
+        <div className="mt-6 rounded-lg bg-white p-6 shadow">
+          {loadingAttempts ? (
+            <p className="text-gray-500">Cargando intentos...</p>
+          ) : attemptsSummary && attemptsSummary.attempts.length > 0 ? (
+            <QuizAttemptsSection
+              quizId="all-knowledges"
+              attempts={attemptsSummary.attempts}
+              title={`Dominio de la sección: ${attemptsSummary.efficiencyPercentage?.toFixed(2) ?? 0}%`}
+            />
+          ) : (
+            <p className="text-gray-600">
+              No se han registrado intentos en estos grupos.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Modal agregar/editar */}
       {(showModal || editItemId) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">

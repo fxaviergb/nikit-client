@@ -8,7 +8,10 @@ import {
   fetchTopicsByKnowledge,
   createTopic,
   updateTopic,
+  fetchAttemptsSummary,
 } from "@/services/api";
+import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
+import { AttemptSummary } from "@/types/attempt-summary";
 
 interface TopicsClientProps {
   knowledgeId: string;
@@ -20,13 +23,21 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+
+  // Sección de intentos
+  const [showAttempts, setShowAttempts] = useState(false);
+  const [attemptsSummary, setAttemptsSummary] = useState<AttemptSummary | null>(
+    null,
+  );
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
 
   useEffect(() => {
     if (!knowledgeId) {
@@ -34,12 +45,11 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
       setLoading(false);
       return;
     }
-
     loadTopics();
   }, [knowledgeId]);
 
-  const mapWithActions = (items: GenericListItem[]): GenericListItem[] => {
-    return items.map((item) => ({
+  const mapWithActions = (items: GenericListItem[]): GenericListItem[] =>
+    items.map((item) => ({
       ...item,
       actions: (
         <button
@@ -57,7 +67,6 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
         </button>
       ),
     }));
-  };
 
   const loadTopics = async () => {
     try {
@@ -101,13 +110,19 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
   const handleMixedEvaluation = () => {
     router.push(
       `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
-        JSON.stringify({
-          knowledges: [knowledgeId],
-          topics: [],
-          quizzes: [],
-        }),
+        JSON.stringify({ knowledges: [knowledgeId], topics: [], quizzes: [] }),
       )}&isInteractive=true&isShuffled=true&questionCount=5`,
     );
+  };
+
+  const handleToggleAttempts = async () => {
+    if (!showAttempts) {
+      setLoadingAttempts(true);
+      const summary = await fetchAttemptsSummary([knowledgeId], null, null);
+      setAttemptsSummary(summary);
+      setLoadingAttempts(false);
+    }
+    setShowAttempts(!showAttempts);
   };
 
   if (loading) return <p>Cargando temas...</p>;
@@ -125,22 +140,48 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
         />
       )}
 
-      {/* ✅ Botones juntos, pegados con gap */}
-      <div className="flex justify-end gap-3 px-4 pb-2 pt-6">
+      {/* ✅ Botones: columna en móviles, fila en escritorio */}
+      <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
         <button
-          className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          className="w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
           onClick={handleMixedEvaluation}
         >
           Evaluación aleatoria
         </button>
         <button
-          className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          className="w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
+          onClick={handleToggleAttempts}
+        >
+          {showAttempts ? "Ocultar intentos" : "Ver intentos"}
+        </button>
+        <button
+          className="w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
           onClick={() => setShowModal(true)}
         >
           Agregar
         </button>
       </div>
 
+      {/* Sección elegante de intentos */}
+      {showAttempts && (
+        <div className="mt-6 rounded-lg bg-white p-6 shadow">
+          {loadingAttempts ? (
+            <p className="text-gray-500">Cargando intentos...</p>
+          ) : attemptsSummary && attemptsSummary.attempts.length > 0 ? (
+            <QuizAttemptsSection
+              quizId={knowledgeId}
+              attempts={attemptsSummary.attempts}
+              title={`Dominio de la sección: ${attemptsSummary.efficiencyPercentage?.toFixed(2) ?? 0}%`}
+            />
+          ) : (
+            <p className="text-gray-600">
+              No se han registrado intentos en este grupo.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Modal agregar/editar */}
       {(showModal || editItemId) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">
