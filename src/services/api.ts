@@ -8,6 +8,7 @@ import { EvaluationAnswerPayload, Quiz, QuizApiResponse, QuizGradeResponse, Quiz
 import { AttemptReviewResponse } from "@/types/attempt-review";
 import { Login } from "@/types/login";
 import { parseCookies, destroyCookie } from "nookies";
+import { AttemptSummary } from "@/types/attempt-summary";
 
 
 // Leer variable de entorno
@@ -179,8 +180,6 @@ export const fetchQuizQuestions = async (
       { params }
     );
 
-    console.log(`Respuesta del API para quizId ${quizId}:`, response.data);
-
     const quizData = response.data;
     const attempt = quizData?.attempts?.[0];
     if (!attempt?.quiz?.questions) throw new Error("Formato de datos inválido");
@@ -194,6 +193,38 @@ export const fetchQuizQuestions = async (
     return { questions: [], attemptId: "" };
   }
 };
+
+// Función para crear evaluación MIXTA
+export const createMixedEvaluation = async (
+  source: {
+    knowledges: string[];
+    topics: string[];
+    quizzes: string[];
+  },
+  params: {
+    questionCount: number;
+  }
+): Promise<{ questions: QuizQuestion[]; attemptId: string }> => {
+  try {
+    const response = await apiClient.post<QuizApiResponse>("/api/v1/evaluation/create/mixed", {
+      source,
+      params,
+    });
+
+    const quizData = response.data;
+    const attempt = quizData?.attempts?.[0];
+    if (!attempt?.quiz?.questions) throw new Error("Formato de datos inválido");
+
+    return {
+      questions: attempt.quiz.questions,
+      attemptId: attempt.id,
+    };
+  } catch (error) {
+    console.error("❌ Error al crear evaluación mixta:", error);
+    return { questions: [], attemptId: "" };
+  }
+};
+
 
 export const sendQuizAnswers = async (
   attemptId: string,
@@ -302,5 +333,33 @@ export const updateQuiz = async (quizId: string, payload: any): Promise<Quiz> =>
   } catch (error) {
     console.error(`❌ Error al actualizar cuestionario ${quizId}:`, error);
     throw error;
+  }
+};
+
+// Función para obtener intentos por Knowledge, topics o quizzes
+export const fetchAttemptsSummary = async (
+  knowledges: string[] | null | undefined,
+  topics: string[] | null | undefined,
+  quizzes: string[] | null | undefined
+): Promise<AttemptSummary | null> => {
+  try {
+    const payload = {
+      queryType: "MIXED",
+      source: {
+        knowledges: knowledges && knowledges.length > 0 ? knowledges : [],
+        topics: topics && topics.length > 0 ? topics : [],
+        quizzes: quizzes && quizzes.length > 0 ? quizzes : [],
+      },
+    };
+
+    const response = await apiClient.post<AttemptSummary>(
+      "/api/v1/evaluation/attempt/search/summary",
+      payload
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al obtener intentos:", error);
+    return null;
   }
 };

@@ -25,10 +25,16 @@ export interface ReviewQuestion {
 export interface AttemptReviewResponse {
   attemptId: string;
   quizId: string;
+  quizType: string;
   review: ReviewQuestion[];
   grade: {
     qualification: string;
     maxQualification: string;
     reviewDate: string;
+  };
+  requestSource: {
+    knowledges: string[];
+    topics: string[];
+    quizzes: string[];
   };
 }

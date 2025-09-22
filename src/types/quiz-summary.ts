@@ -21,4 +21,3 @@ export interface QuizAttempt {
     metadata?: { questions?: string };
     attempts?: { id?: string; grade?: string; maxGrade?: string; date?: string }[];
   }
-  
