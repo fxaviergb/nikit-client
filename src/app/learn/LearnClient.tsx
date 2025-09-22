@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import GenericListCard from "@/components/List/GenericListCard";
 import { GenericListItem } from "@/types/generic-list-item";
-import { fetchKnowledges, createKnowledge, updateKnowledge } from "@/services/api";
+import {
+  fetchKnowledges,
+  createKnowledge,
+  updateKnowledge,
+} from "@/services/api";
 
 const LearnClient: React.FC = () => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
@@ -16,6 +21,8 @@ const LearnClient: React.FC = () => {
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
+  const router = useRouter();
+
   useEffect(() => {
     loadList();
   }, []);
@@ -25,7 +32,7 @@ const LearnClient: React.FC = () => {
       ...item,
       actions: (
         <button
-          className="text-blue-600 ml-4 text-lg"
+          className="ml-4 text-lg text-blue-600"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -75,6 +82,18 @@ const LearnClient: React.FC = () => {
     }
   };
 
+  const handleMixedEvaluation = () => {
+    router.push(
+      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
+        JSON.stringify({
+          knowledges: listData.map((item) => item.id),
+          topics: [],
+          quizzes: [],
+        }),
+      )}&isInteractive=true&isShuffled=true&questionCount=5`,
+    );
+  };
+
   if (loading) return <p>Cargando grupos...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -90,9 +109,18 @@ const LearnClient: React.FC = () => {
         />
       )}
 
-      <div className="flex justify-end pt-6 pb-2 px-4">
+      <div className="flex justify-end gap-4 px-4 pb-2 pt-6">
+        {/* ✅ Botón verde, siempre visible si hay al menos un knowledge */}
+        {listData.length > 0 && (
+          <button
+            onClick={handleMixedEvaluation}
+            className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
+            Evaluación aleatoria
+          </button>
+        )}
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+          className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
           onClick={() => setShowModal(true)}
         >
           Agregar
@@ -100,29 +128,35 @@ const LearnClient: React.FC = () => {
       </div>
 
       {(showModal || editItemId) && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
-          <div className="bg-white rounded p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">
-              {editItemId ? "Modificar grupo de conocimiento" : "Agrega un grupo de conocimiento"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold">
+              {editItemId
+                ? "Modificar grupo de conocimiento"
+                : "Agrega un grupo de conocimiento"}
             </h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Nombre</label>
+              <label className="mb-1 block text-sm font-medium">Nombre</label>
               <input
                 type="text"
                 value={editItemId ? editName : name}
                 onChange={(e) =>
-                  editItemId ? setEditName(e.target.value) : setName(e.target.value)
+                  editItemId
+                    ? setEditName(e.target.value)
+                    : setName(e.target.value)
                 }
-                className="w-full border rounded px-3 py-2"
+                className="w-full rounded border px-3 py-2"
               />
             </div>
             {!editItemId && (
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Descripción
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border rounded px-3 py-2"
+                  className="w-full rounded border px-3 py-2"
                 />
               </div>
             )}
@@ -132,13 +166,13 @@ const LearnClient: React.FC = () => {
                   setShowModal(false);
                   setEditItemId(null);
                 }}
-                className="px-4 py-2 border rounded hover:bg-gray-100"
+                className="rounded border px-4 py-2 hover:bg-gray-100"
               >
                 Cancelar
               </button>
               <button
                 onClick={editItemId ? handleUpdate : handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Guardar
               </button>

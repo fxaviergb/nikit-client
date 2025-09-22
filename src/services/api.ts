@@ -179,8 +179,6 @@ export const fetchQuizQuestions = async (
       { params }
     );
 
-    console.log(`Respuesta del API para quizId ${quizId}:`, response.data);
-
     const quizData = response.data;
     const attempt = quizData?.attempts?.[0];
     if (!attempt?.quiz?.questions) throw new Error("Formato de datos inválido");
@@ -194,6 +192,38 @@ export const fetchQuizQuestions = async (
     return { questions: [], attemptId: "" };
   }
 };
+
+// Función para crear evaluación MIXTA
+export const createMixedEvaluation = async (
+  source: {
+    knowledges: string[];
+    topics: string[];
+    quizzes: string[];
+  },
+  params: {
+    questionCount: number;
+  }
+): Promise<{ questions: QuizQuestion[]; attemptId: string }> => {
+  try {
+    const response = await apiClient.post<QuizApiResponse>("/api/v1/evaluation/create/mixed", {
+      source,
+      params,
+    });
+
+    const quizData = response.data;
+    const attempt = quizData?.attempts?.[0];
+    if (!attempt?.quiz?.questions) throw new Error("Formato de datos inválido");
+
+    return {
+      questions: attempt.quiz.questions,
+      attemptId: attempt.id,
+    };
+  } catch (error) {
+    console.error("❌ Error al crear evaluación mixta:", error);
+    return { questions: [], attemptId: "" };
+  }
+};
+
 
 export const sendQuizAnswers = async (
   attemptId: string,

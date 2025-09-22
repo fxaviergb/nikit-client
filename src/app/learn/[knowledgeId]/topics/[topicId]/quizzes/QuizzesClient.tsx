@@ -41,27 +41,59 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
     router.push("/constructor");
   };
 
+  const handleMixedEvaluation = () => {
+    router.push(
+      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
+        JSON.stringify({
+          knowledges: [],
+          topics: [topicId],
+          quizzes: [],
+        }),
+      )}&isInteractive=true&isShuffled=true&questionCount=5`,
+    );
+  };
+
   return (
     <>
       {loading && <p>Cargando cuestionarios...</p>}
       {error && <p className="text-red-500">{error}</p>}
 
       {!loading && !error && listData.length > 0 && (
-        <GenericListCard
-          cardTitle="Cuestionarios"
-          listData={listData}
-          generateHref={(id) => `/evaluation/quiz/${id}/summary`}
-        />
+        <>
+          <GenericListCard
+            cardTitle="Cuestionarios"
+            listData={listData}
+            generateHref={(id) => `/evaluation/quiz/${id}/summary`}
+          />
+
+          {/* ✅ Botones juntos, pegados con gap */}
+          <div className="flex justify-end gap-3 px-4 pb-2 pt-6">
+            {listData.length > 1 && (
+              <button
+                onClick={handleMixedEvaluation}
+                className="rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+              >
+                Evaluación aleatoria
+              </button>
+            )}
+            <button
+              onClick={handleCreateQuiz}
+              className="rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+            >
+              Crear un cuestionario
+            </button>
+          </div>
+        </>
       )}
 
       {!loading && !error && listData.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-lg text-gray-600 mb-4">
+        <div className="py-10 text-center">
+          <p className="mb-4 text-lg text-gray-600">
             Aún no se han creado cuestionarios para este tema.
           </p>
           <button
             onClick={handleCreateQuiz}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+            className="rounded bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
           >
             Crear un cuestionario
           </button>

@@ -67,6 +67,37 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({
     }));
   };
 
+  const handleOk = () => {
+    if (reviewData?.quizType === "MIXED") {
+      if (reviewData.requestSource.knowledges.length > 1) {
+        router.push(`/learn`);
+        return;
+      }
+
+      if (reviewData.requestSource.knowledges.length === 1) {
+        const knowledgeId = reviewData.requestSource.knowledges[0];
+        router.push(`/learn/${knowledgeId}/topics`);
+        return;
+      }
+
+      if (reviewData.requestSource.topics.length === 1) {
+        const topicId = reviewData.requestSource.topics[0];
+        const knowledgeId = "0";
+        router.push(`/learn/${knowledgeId}/topics/${topicId}/quizzes`);
+        return;
+      }
+
+      if (reviewData.requestSource.quizzes.length === 1) {
+        const quizId = reviewData.requestSource.quizzes[0];
+        router.push(`/evaluation/quiz/${quizId}/summary`);
+        return;
+      }
+    }
+
+    // Default redirect to quiz summary
+    router.push(`/evaluation/quiz/${quizId}/summary`);
+  };
+
   if (loading)
     return <p className="text-gray-500">Cargando revisión del intento...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
@@ -275,7 +306,7 @@ const AttemptReviewClient: React.FC<AttemptReviewClientProps> = ({
       {/* Botón "Ok" */}
       <div className="mt-8 flex justify-end">
         <button
-          onClick={() => router.push(`/evaluation/quiz/${quizId}/summary`)}
+          onClick={handleOk}
           className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
         >
           Ok
