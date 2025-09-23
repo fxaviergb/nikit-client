@@ -7,6 +7,8 @@ import { fetchQuizzesByTopic, fetchAttemptsSummary } from "@/services/api";
 import { GenericListItem } from "@/types/generic-list-item";
 import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
 import { AttemptSummary } from "@/types/attempt-summary";
+import ToggleSwitch from "@/components/Switchers/ToggleSwitch";
+import EvaluationConfigModal from "@/components/Evaluation/EvaluationConfigModal";
 
 interface QuizzesClient {
   topicId: string;
@@ -22,6 +24,9 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
     null,
   );
   const [loadingAttempts, setLoadingAttempts] = useState(false);
+
+  // Estado para abrir/cerrar modal
+  const [showEvalModal, setShowEvalModal] = useState(false);
 
   const router = useRouter();
 
@@ -50,18 +55,6 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
     router.push("/constructor");
   };
 
-  const handleMixedEvaluation = () => {
-    router.push(
-      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
-        JSON.stringify({
-          knowledges: [],
-          topics: [topicId],
-          quizzes: [],
-        }),
-      )}&isInteractive=true&isShuffled=true&questionCount=5`,
-    );
-  };
-
   const handleToggleAttempts = async () => {
     if (!showAttempts) {
       setLoadingAttempts(true);
@@ -70,6 +63,18 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
       setLoadingAttempts(false);
     }
     setShowAttempts(!showAttempts);
+  };
+
+  const handleConfirmEvaluation = (
+    isInteractive: boolean,
+    isShuffled: boolean,
+    questionCount: number,
+  ) => {
+    router.push(
+      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
+        JSON.stringify({ knowledges: [], topics: [topicId], quizzes: [] }),
+      )}&isInteractive=${isInteractive}&isShuffled=${isShuffled}&questionCount=${questionCount}`,
+    );
   };
 
   return (
@@ -81,6 +86,13 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
         <>
           <GenericListCard
             cardTitle="Cuestionarios"
+            cardActions={
+              <ToggleSwitch
+                label="Intentos"
+                checked={showAttempts}
+                onToggle={handleToggleAttempts}
+              />
+            }
             listData={listData}
             generateHref={(id) => `/evaluation/quiz/${id}/summary`}
           />
@@ -89,18 +101,12 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
           <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
             {listData.length > 1 && (
               <button
-                onClick={handleMixedEvaluation}
-                className="min-h-[3rem] w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
+                className="w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
+                onClick={() => setShowEvalModal(true)}
               >
                 Evaluación aleatoria
               </button>
             )}
-            <button
-              onClick={handleToggleAttempts}
-              className="min-h-[3rem] w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
-            >
-              {showAttempts ? "Ocultar intentos" : "Ver intentos"}
-            </button>
             <button
               onClick={handleCreateQuiz}
               className="min-h-[3rem] w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
@@ -108,6 +114,13 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
               Crear un cuestionario
             </button>
           </div>
+
+          {/* Modal de configuración */}
+          <EvaluationConfigModal
+            isOpen={showEvalModal}
+            onClose={() => setShowEvalModal(false)}
+            onConfirm={handleConfirmEvaluation}
+          />
 
           {/* Sección de intentos */}
           {showAttempts && (

@@ -78,7 +78,7 @@ const EvaluationQuizClientSummary: React.FC<
                 Iniciar
               </button>
               <button
-                onClick={() => router.push("/learn")}
+                onClick={() => router.back()}
                 className="w-full rounded-md bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
               >
                 Volver

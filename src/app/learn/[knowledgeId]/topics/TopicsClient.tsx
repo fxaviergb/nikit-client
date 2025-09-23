@@ -12,6 +12,8 @@ import {
 } from "@/services/api";
 import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
 import { AttemptSummary } from "@/types/attempt-summary";
+import ToggleSwitch from "@/components/Switchers/ToggleSwitch";
+import EvaluationConfigModal from "@/components/Evaluation/EvaluationConfigModal";
 
 interface TopicsClientProps {
   knowledgeId: string;
@@ -38,6 +40,9 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
     null,
   );
   const [loadingAttempts, setLoadingAttempts] = useState(false);
+
+  // Estado para abrir/cerrar modal
+  const [showEvalModal, setShowEvalModal] = useState(false);
 
   useEffect(() => {
     if (!knowledgeId) {
@@ -107,14 +112,6 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
     }
   };
 
-  const handleMixedEvaluation = () => {
-    router.push(
-      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
-        JSON.stringify({ knowledges: [knowledgeId], topics: [], quizzes: [] }),
-      )}&isInteractive=true&isShuffled=true&questionCount=5`,
-    );
-  };
-
   const handleToggleAttempts = async () => {
     if (!showAttempts) {
       setLoadingAttempts(true);
@@ -123,6 +120,18 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
       setLoadingAttempts(false);
     }
     setShowAttempts(!showAttempts);
+  };
+
+  const handleConfirmEvaluation = (
+    isInteractive: boolean,
+    isShuffled: boolean,
+    questionCount: number,
+  ) => {
+    router.push(
+      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
+        JSON.stringify({ knowledges: [knowledgeId], topics: [], quizzes: [] }),
+      )}&isInteractive=${isInteractive}&isShuffled=${isShuffled}&questionCount=${questionCount}`,
+    );
   };
 
   if (loading) return <p>Cargando temas...</p>;
@@ -135,24 +144,25 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
       ) : (
         <GenericListCard
           cardTitle="Temas"
+          cardActions={
+            <ToggleSwitch
+              label="Intentos"
+              checked={showAttempts}
+              onToggle={handleToggleAttempts}
+            />
+          }
           listData={listData}
           generateHref={(id) => `/learn/${knowledgeId}/topics/${id}/quizzes`}
         />
       )}
 
-      {/* ✅ Botones: columna en móviles, fila en escritorio */}
+      {/* ✅ Botones principales */}
       <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
         <button
           className="w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
-          onClick={handleMixedEvaluation}
+          onClick={() => setShowEvalModal(true)}
         >
           Evaluación aleatoria
-        </button>
-        <button
-          className="w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
-          onClick={handleToggleAttempts}
-        >
-          {showAttempts ? "Ocultar intentos" : "Ver intentos"}
         </button>
         <button
           className="w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
@@ -161,6 +171,13 @@ const TopicsClient: React.FC<TopicsClientProps> = ({ knowledgeId }) => {
           Agregar
         </button>
       </div>
+
+      {/* Modal de configuración */}
+      <EvaluationConfigModal
+        isOpen={showEvalModal}
+        onClose={() => setShowEvalModal(false)}
+        onConfirm={handleConfirmEvaluation}
+      />
 
       {/* Sección elegante de intentos */}
       {showAttempts && (
