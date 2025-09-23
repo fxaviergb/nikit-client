@@ -12,6 +12,8 @@ import {
 } from "@/services/api";
 import QuizAttemptsSection from "@/components/Quiz/QuizAttemptsSection";
 import { AttemptSummary } from "@/types/attempt-summary";
+import ToggleSwitch from "@/components/Switchers/ToggleSwitch";
+import EvaluationConfigModal from "@/components/Evaluation/EvaluationConfigModal";
 
 const LearnClient: React.FC = () => {
   const [listData, setListData] = useState<GenericListItem[]>([]);
@@ -30,6 +32,9 @@ const LearnClient: React.FC = () => {
     null,
   );
   const [loadingAttempts, setLoadingAttempts] = useState(false);
+
+  // Estado para abrir/cerrar modal
+  const [showEvalModal, setShowEvalModal] = useState(false);
 
   const router = useRouter();
 
@@ -118,6 +123,22 @@ const LearnClient: React.FC = () => {
     setShowAttempts(!showAttempts);
   };
 
+  const handleConfirmEvaluation = (
+    isInteractive: boolean,
+    isShuffled: boolean,
+    questionCount: number,
+  ) => {
+    router.push(
+      `/evaluation/execution?type=MIXED&source=${encodeURIComponent(
+        JSON.stringify({
+          knowledges: listData.map((item) => item.id),
+          topics: [],
+          quizzes: [],
+        }),
+      )}&isInteractive=${isInteractive}&isShuffled=${isShuffled}&questionCount=${questionCount}`,
+    );
+  };
+
   if (loading) return <p>Cargando grupos...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -128,6 +149,13 @@ const LearnClient: React.FC = () => {
       ) : (
         <GenericListCard
           cardTitle="Grupos de conocimiento"
+          cardActions={
+            <ToggleSwitch
+              label="Intentos"
+              checked={showAttempts}
+              onToggle={handleToggleAttempts}
+            />
+          }
           listData={listData}
           generateHref={(id) => `/learn/${id}/topics`}
         />
@@ -137,18 +165,12 @@ const LearnClient: React.FC = () => {
       <div className="flex flex-col justify-end gap-3 px-4 pb-2 pt-6 sm:flex-row">
         {listData.length > 0 && (
           <button
-            onClick={handleMixedEvaluation}
             className="w-full rounded bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700 sm:w-50"
+            onClick={() => setShowEvalModal(true)}
           >
             Evaluación aleatoria
           </button>
         )}
-        <button
-          onClick={handleToggleAttempts}
-          className="w-full rounded bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-700 sm:w-50"
-        >
-          {showAttempts ? "Ocultar intentos" : "Ver intentos"}
-        </button>
         <button
           className="w-full rounded bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700 sm:w-50"
           onClick={() => setShowModal(true)}
@@ -156,6 +178,13 @@ const LearnClient: React.FC = () => {
           Agregar
         </button>
       </div>
+
+      {/* Modal de configuración */}
+      <EvaluationConfigModal
+        isOpen={showEvalModal}
+        onClose={() => setShowEvalModal(false)}
+        onConfirm={handleConfirmEvaluation}
+      />
 
       {/* Sección elegante de intentos */}
       {showAttempts && (
