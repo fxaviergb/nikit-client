@@ -10,6 +10,7 @@ export class QuizSummaryMapper {
     id: string;
     name: string;
     description: string;
+    efficiencyPercentage?: number;
     metadata: { questions?: string | number }; // Puede faltar o tener distintos tipos
     attempts: { id?: string; grade?: string | number; maxGrade?: string | number; date?: string }[];
   }>): QuizSummary {
@@ -18,6 +19,9 @@ export class QuizSummaryMapper {
       name: data.name ?? "Unknown Quiz",
       description: data.description ?? "No description available",
       questions: QuizSummaryMapper.parseNumber(data.metadata?.questions, 0), // Convertir `questions` a número o 0
+      efficiencyPercentage: data.efficiencyPercentage !== undefined
+      ? QuizSummaryMapper.parseNumber(data.efficiencyPercentage, 0)
+      : undefined,
       attempts: (data.attempts ?? []).map(attempt => QuizSummaryMapper.mapToQuizAttempt(attempt)),
     };
   }

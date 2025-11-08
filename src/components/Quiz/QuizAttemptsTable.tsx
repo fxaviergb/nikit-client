@@ -7,8 +7,13 @@ interface QuizAttemptsTableProps {
   generateHref: (id: string) => string;
 }
 
-const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({ quizId, attempts, generateHref }) => {
+const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({
+  quizId,
+  attempts,
+  generateHref,
+}) => {
   const router = useRouter();
+  const totalAttempts = attempts.length;
 
   return (
     <div className="rounded-sm border border-stroke bg-white px-5 pb-2.5 pt-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
@@ -16,63 +21,77 @@ const QuizAttemptsTable: React.FC<QuizAttemptsTableProps> = ({ quizId, attempts,
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-2 text-center dark:bg-meta-4">
-              <th className="px-4 py-4 font-medium text-black dark:text-white"># Intento</th>
-              <th className="px-4 py-4 font-medium text-black dark:text-white">Fecha</th> 
-              <th className="px-4 py-4 font-medium text-black dark:text-white">Calificación</th>
-              <th className="px-4 py-4 font-medium text-black dark:text-white">Eficiencia</th>
-              <th className="px-4 py-4 font-medium text-black dark:text-white">Acción</th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">
+                # Intento
+              </th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">
+                Fecha
+              </th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">
+                Calificación
+              </th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">
+                Eficiencia
+              </th>
+              <th className="px-4 py-4 font-medium text-black dark:text-white">
+                Acción
+              </th>
             </tr>
           </thead>
           <tbody>
-            {attempts.map((attempt, index) => (
-              <tr key={attempt.id} className="text-center">
-                {/* # Intento */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  {index + 1}
-                </td>
+            {attempts.map((attempt, index) => {
+              const descendingAttemptNumber = totalAttempts - index;
 
-                {/* Fecha */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  {attempt.date}
-                </td>
+              return (
+                <tr key={attempt.id} className="text-center">
+                  {/* # Intento */}
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    {descendingAttemptNumber}
+                  </td>
 
-                {/* Calificación */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  {attempt.grade} / {attempt.maxGrade}
-                </td>
+                  {/* Fecha */}
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    {attempt.date}
+                  </td>
 
-                {/* Eficiencia */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  {attempt.efficiencyPercentage !== undefined
-                    ? `${attempt.efficiencyPercentage.toFixed(2)}%`
-                    : "N/A"}
-                </td>
+                  {/* Calificación */}
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    {attempt.grade} / {attempt.maxGrade}
+                  </td>
 
-                {/* Acción */}
-                <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
-                  <button
-                    onClick={() => router.push(generateHref(attempt.id))}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Ver intento"
-                  >
-                    <svg
-                      className="w-5 h-5 mx-auto"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
+                  {/* Eficiencia */}
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    {attempt.efficiencyPercentage !== undefined
+                      ? `${attempt.efficiencyPercentage.toFixed(2)}%`
+                      : "N/A"}
+                  </td>
+
+                  {/* Acción */}
+                  <td className="border-b border-[#eee] px-4 py-5 dark:border-strokedark">
+                    <button
+                      onClick={() => router.push(generateHref(attempt.id))}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Ver intento"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0 -6 0M2.458 12c1.837 -4.667 6.178 -8 11.542 -8s9.705 3.333 11.542 8c-1.837 4.667 -6.178 8 -11.542 8s-9.705 -3.333 -11.542 -8"
-                      ></path>
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      <svg
+                        className="mx-auto h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 12m-3 0a3 3 0 1 0 6 0 3 3 0 1 0 -6 0M2.458 12c1.837 -4.667 6.178 -8 11.542 -8s9.705 3.333 11.542 8c-1.837 4.667 -6.178 8 -11.542 8s-9.705 -3.333 -11.542 -8"
+                        ></path>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

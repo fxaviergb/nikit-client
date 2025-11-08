@@ -166,7 +166,11 @@ const EvaluationQuizClientSummary: React.FC<
         )}
       </div>
 
-      <QuizAttemptsSection quizId={quizId} attempts={quizSummary.attempts} />
+      <QuizAttemptsSection
+        quizId={quizId}
+        attempts={quizSummary.attempts}
+        title={`Dominio de la sección: ${quizSummary.efficiencyPercentage?.toFixed(2) ?? 0}%`}
+      />
     </div>
   );
 };
