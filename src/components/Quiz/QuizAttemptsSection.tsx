@@ -27,6 +27,8 @@ const QuizAttemptsSection: React.FC<QuizAttemptsSectionProps> = ({
     return hasValidDate && hasValidGrade;
   });
 
+  const totalAttempts = validAttempts.length;
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString("es-EC", {
@@ -42,6 +44,8 @@ const QuizAttemptsSection: React.FC<QuizAttemptsSectionProps> = ({
   const QuizAttemptsCardList = () => (
     <div className="grid grid-cols-1 gap-3 sm:hidden">
       {validAttempts.map((attempt, index) => {
+        const descendingAttemptNumber = totalAttempts - index;
+
         const gradeColor =
           attempt.grade !== null && attempt.grade >= 90
             ? "bg-green-100 text-green-800"
@@ -58,7 +62,7 @@ const QuizAttemptsSection: React.FC<QuizAttemptsSectionProps> = ({
             }
           >
             <div className="text-sm font-semibold text-gray-800">
-              📘 Intento #{index + 1}
+              📘 Intento #{descendingAttemptNumber}
             </div>
             <div className="flex items-center justify-between text-sm text-gray-700">
               <span>
