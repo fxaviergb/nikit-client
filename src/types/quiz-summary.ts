@@ -11,6 +11,7 @@ export interface QuizAttempt {
     name: string;
     description: string;
     questions: number;
+    efficiencyPercentage?: number;
     attempts: QuizAttempt[];
   }
   
@@ -18,6 +19,7 @@ export interface QuizAttempt {
     id?: string;
     name?: string;
     description?: string;
+    efficiencyPercentage?: number;
     metadata?: { questions?: string };
     attempts?: { id?: string; grade?: string; maxGrade?: string; date?: string }[];
   }

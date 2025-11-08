@@ -14,7 +14,7 @@ interface QuizAttemptsSectionProps {
 const QuizAttemptsSection: React.FC<QuizAttemptsSectionProps> = ({
   quizId,
   attempts,
-  title = "Intentos Anteriores", // 🔹 Valor por defecto
+  title = "Intentos Anteriores",
 }) => {
   const router = useRouter();
 
