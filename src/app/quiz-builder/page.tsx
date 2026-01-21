@@ -3,7 +3,7 @@ import ConstructorClient from "./ConstructorClient";
 import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 export const metadata: Metadata = {
-  title: "Constructor | NikIT",
+  title: "Quiz Builder | NikIT",
   description: "Página para construir quizzes.",
 };
 
