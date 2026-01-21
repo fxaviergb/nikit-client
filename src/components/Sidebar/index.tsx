@@ -81,7 +81,7 @@ const menuGroups = [
           </svg>
         ),
         label: "Constructor",
-        route: "/constructor",
+        route: "/quiz-builder",
       },
       {
         icon: (

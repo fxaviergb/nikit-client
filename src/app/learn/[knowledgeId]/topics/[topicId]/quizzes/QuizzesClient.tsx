@@ -52,7 +52,7 @@ const QuizzesClient: React.FC<QuizzesClient> = ({ topicId }) => {
   }, [topicId]);
 
   const handleCreateQuiz = () => {
-    router.push("/constructor");
+    router.push("/quiz-builder");
   };
 
   const handleToggleAttempts = async () => {
